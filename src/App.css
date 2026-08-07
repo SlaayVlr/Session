@@ -2036,3 +2036,219 @@ input[type="color"]:hover {
   height: 8px;
   border-radius: 50%;
 }
+
+/* Maps view */
+
+.maps-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeSlideUp 0.35s var(--ease);
+}
+
+.maps-loading,
+.maps-error {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 60px 0;
+  text-align: center;
+}
+
+.maps-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.maps-section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.maps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.maps-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--surface);
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.15s var(--ease);
+}
+
+.maps-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.maps-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.maps-card span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.65));
+}
+
+.maps-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 10px;
+}
+
+.maps-agent-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 4px;
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.15s var(--ease);
+}
+
+.maps-agent-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.maps-agent-card img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  object-fit: cover;
+}
+
+.maps-agent-card span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.maps-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+  animation: fadeIn 0.2s var(--ease);
+}
+
+.maps-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  animation: popIn 0.25s var(--ease-bounce);
+}
+
+.maps-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.maps-modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.maps-modal-header button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.maps-modal-header button:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.maps-modal-image {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.maps-abilities {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.maps-ability {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.maps-ability img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+
+.maps-ability-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.maps-ability-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.maps-fortnite-map {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.maps-fortnite-map img {
+  width: 100%;
+  display: block;
+}

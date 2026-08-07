@@ -5,17 +5,19 @@ import { SessionView } from "./SessionView";
 import { JournalView } from "./JournalView";
 import { NotesView } from "./NotesView";
 import { StatsView } from "./StatsView";
+import { MapsView } from "./MapsView";
 import { SettingsPanel } from "./SettingsPanel";
 import { UpdateBanner } from "./UpdateBanner";
 import { GearIcon, LiveIcon } from "./icons";
 
-type SubTab = "session" | "journal" | "notes" | "stats";
+type SubTab = "session" | "journal" | "notes" | "stats" | "maps";
 
 const SUB_TABS: { id: SubTab; label: string }[] = [
   { id: "session", label: "Session" },
   { id: "journal", label: "Journal" },
   { id: "notes", label: "Notes" },
   { id: "stats", label: "Stats" },
+  { id: "maps", label: "Maps" },
 ];
 
 export function AppShell() {
@@ -91,6 +93,7 @@ export function AppShell() {
         {subTab === "journal" && <JournalView game={currentGame} />}
         {subTab === "notes" && <NotesView game={currentGame} />}
         {subTab === "stats" && <StatsView game={currentGame} />}
+        {subTab === "maps" && <MapsView game={currentGame} />}
       </main>
 
       {settingsOpen && (
