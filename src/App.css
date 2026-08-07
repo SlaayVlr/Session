@@ -2242,81 +2242,16 @@ input[type="color"]:hover {
   line-height: 1.5;
 }
 
-.maps-fortnite-layout {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-  min-height: 480px;
-  animation: fadeSlideUp 0.35s var(--ease);
-}
-
-.maps-fortnite-sidebar {
-  width: 190px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.maps-fortnite-sidebar .settings-checkbox {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 10px;
-}
-
-.maps-zoom-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 6px 10px;
-}
-
-.maps-zoom-controls button {
-  width: 26px;
-  height: 26px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1;
-  transition: border-color 0.2s var(--ease);
-}
-
-.maps-zoom-controls button:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-
-.maps-zoom-controls button:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.maps-zoom-controls span {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.maps-fortnite-note {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--text-muted);
-}
-
 .maps-fortnite-viewport {
   flex: 1;
+  height: 100%;
+  min-height: 480px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   position: relative;
+  animation: fadeSlideUp 0.35s var(--ease);
 }
 
 .maps-fortnite-canvas {
@@ -2338,9 +2273,57 @@ input[type="color"]:hover {
   -webkit-user-drag: none;
 }
 
-.maps-fortnite-pois-layer {
+.maps-zoom-floating {
   position: absolute;
-  inset: 0;
-  margin: auto;
-  transition: opacity 0.2s var(--ease);
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.maps-zoom-floating button {
+  width: 26px;
+  height: 26px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  transition: border-color 0.2s var(--ease);
+}
+
+.maps-zoom-floating button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.maps-zoom-floating button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.maps-zoom-floating span {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  text-align: center;
+}
+
+.maps-zoom-floating button.maps-zoom-reset {
+  width: auto;
+  height: 26px;
+  border-radius: 999px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }
