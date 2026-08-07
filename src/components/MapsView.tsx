@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, WheelEvent, MouseEvent } from "react";
 import { fetchCached } from "../apiCache";
 import { Game } from "../types";
 
@@ -36,8 +36,12 @@ interface ValorantAgentsResponse {
 }
 
 interface FortniteMapResponse {
-  data: { images: { pois: string } };
+  data: { images: { blank: string; pois: string } };
 }
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.4;
 
 function ValorantMaps() {
   const [maps, setMaps] = useState<ValorantMap[] | null>(null);
@@ -161,14 +165,59 @@ function ValorantMaps() {
 }
 
 function FortniteMap() {
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<{ blank: string; pois: string } | null>(null);
   const [error, setError] = useState(false);
+  const [showPois, setShowPois] = useState(true);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(
+    null,
+  );
 
   useEffect(() => {
-    fetchCached<FortniteMapResponse>("fortnite-map-v1", "https://fortnite-api.com/v1/map")
-      .then((res) => setImage(res.data.images.pois))
+    fetchCached<FortniteMapResponse>("fortnite-map-v2", "https://fortnite-api.com/v1/map")
+      .then((res) => setImages(res.data.images))
       .catch(() => setError(true));
   }, []);
+
+  function clampZoom(z: number) {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+  }
+
+  function handleWheel(e: WheelEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const next = clampZoom(zoom + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
+    setZoom(next);
+    if (next === MIN_ZOOM) setPan({ x: 0, y: 0 });
+  }
+
+  function handleMouseDown(e: MouseEvent<HTMLDivElement>) {
+    if (zoom === MIN_ZOOM) return;
+    dragState.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+  }
+
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (!dragState.current) return;
+    setPan({
+      x: dragState.current.panX + (e.clientX - dragState.current.startX),
+      y: dragState.current.panY + (e.clientY - dragState.current.startY),
+    });
+  }
+
+  function endDrag() {
+    dragState.current = null;
+  }
+
+  function zoomBy(delta: number) {
+    const next = clampZoom(zoom + delta);
+    setZoom(next);
+    if (next === MIN_ZOOM) setPan({ x: 0, y: 0 });
+  }
+
+  function resetView() {
+    setZoom(MIN_ZOOM);
+    setPan({ x: 0, y: 0 });
+  }
 
   if (error) {
     return (
@@ -178,14 +227,66 @@ function FortniteMap() {
     );
   }
 
-  if (!image) {
+  if (!images) {
     return <div className="maps-loading">Chargement...</div>;
   }
 
   return (
-    <div className="maps-view">
-      <div className="maps-fortnite-map">
-        <img src={image} alt="Carte Fortnite actuelle" />
+    <div className="maps-fortnite-layout">
+      <aside className="maps-fortnite-sidebar">
+        <span className="maps-section-title">Calques</span>
+        <label className="settings-checkbox">
+          <input
+            type="checkbox"
+            checked={showPois}
+            onChange={(e) => setShowPois(e.target.checked)}
+          />
+          Points d'interet
+        </label>
+
+        <span className="maps-section-title">Zoom</span>
+        <div className="maps-zoom-controls">
+          <button type="button" onClick={() => zoomBy(-ZOOM_STEP)} disabled={zoom <= MIN_ZOOM}>
+            -
+          </button>
+          <span>{Math.round((zoom / MIN_ZOOM) * 100)}%</span>
+          <button type="button" onClick={() => zoomBy(ZOOM_STEP)} disabled={zoom >= MAX_ZOOM}>
+            +
+          </button>
+        </div>
+        <button type="button" className="settings-browse-button" onClick={resetView}>
+          Reinitialiser la vue
+        </button>
+
+        <p className="maps-fortnite-note">
+          Molette pour zoomer, glisser pour deplacer. Les coffres et munitions ne sont
+          pas disponibles via l'API publique (donnees minees par fortnite.gg directement
+          dans les fichiers du jeu).
+        </p>
+      </aside>
+
+      <div
+        className="maps-fortnite-viewport"
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={endDrag}
+        onMouseLeave={endDrag}
+        style={{ cursor: zoom > MIN_ZOOM ? "grab" : "default" }}
+      >
+        <div
+          className="maps-fortnite-canvas"
+          style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+        >
+          <img src={images.blank} alt="Carte Fortnite" draggable={false} />
+          <img
+            src={images.pois}
+            alt="Points d'interet"
+            draggable={false}
+            className="maps-fortnite-pois-layer"
+            style={{ opacity: showPois ? 1 : 0 }}
+          />
+        </div>
       </div>
     </div>
   );
