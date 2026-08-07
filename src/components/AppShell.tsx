@@ -6,6 +6,7 @@ import { JournalView } from "./JournalView";
 import { NotesView } from "./NotesView";
 import { StatsView } from "./StatsView";
 import { SettingsPanel } from "./SettingsPanel";
+import { UpdateBanner } from "./UpdateBanner";
 import { GearIcon } from "./icons";
 
 type SubTab = "session" | "journal" | "notes" | "stats";
@@ -35,6 +36,7 @@ export function AppShell() {
 
   return (
     <div className={`app-shell app-shell--${currentGame}`}>
+      <UpdateBanner />
       <header className="app-header">
         <div className="game-tabs">
           {activeGames.map((game) => (
