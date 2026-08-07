@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 const GEAR_TEETH = Array.from({ length: 8 }, (_, i) => i * 45);
 
 export function GearIcon({ size = 18 }: { size?: number }) {
@@ -188,5 +190,84 @@ export function LiveIcon({ size = 22 }: { size?: number }) {
       <path className="live-icon-arc live-icon-arc--2" d={arcPath(cx, cy, 10, -50, 50)} />
       <circle className="live-icon-dot" cx={cx} cy={cy} r="3.4" fill="#e2413e" stroke="none" />
     </svg>
+  );
+}
+
+function toolSvg(children: ReactNode, size: number) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function CursorIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(<path d="M5 3.5 18 10l-5.5 1.5L11 17 5 3.5Z" />, size);
+}
+
+export function LineToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(
+    <>
+      <circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M6.5 17.5 17.5 6.5" />
+      <circle cx="19" cy="5" r="1.6" fill="currentColor" stroke="none" />
+    </>,
+    size,
+  );
+}
+
+export function ArrowToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(
+    <>
+      <path d="M5 19 19 5" />
+      <path d="M9 5h10v10" />
+    </>,
+    size,
+  );
+}
+
+export function RectToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(<rect x="4" y="6" width="16" height="12" rx="1.5" />, size);
+}
+
+export function CircleToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(<circle cx="12" cy="12" r="8" />, size);
+}
+
+export function TextToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(
+    <>
+      <path d="M5 6h14" />
+      <path d="M12 6v13" />
+      <path d="M9 19h6" />
+    </>,
+    size,
+  );
+}
+
+export function PenToolIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(
+    <path d="M4 17.5C7 14 9 10 11 6c.6-1.2 2.4-1.2 3 0 2 4 4 8 7 11.5-3.5-1-6-1-9 0-3.2 1.1-5.5 1-8 0Z" />,
+    size,
+  );
+}
+
+export function UndoIcon({ size = 16 }: { size?: number }) {
+  return toolSvg(
+    <>
+      <path d="M7 8 3 12l4 4" />
+      <path d="M3 12h11a6 6 0 0 1 0 12h-2" />
+    </>,
+    size,
   );
 }

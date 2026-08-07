@@ -2203,8 +2203,17 @@ input[type="color"]:hover {
   background: var(--surface-2);
 }
 
+.maps-modal--map {
+  max-width: 760px;
+}
+
+.maps-modal-image-frame {
+  position: relative;
+}
+
 .maps-modal-image {
   width: 100%;
+  display: block;
   border-radius: var(--radius);
   border: 1px solid var(--border);
 }
@@ -2326,4 +2335,118 @@ input[type="color"]:hover {
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
+}
+
+/* Drawing tools */
+
+.drawing-overlay-container {
+  position: absolute;
+  inset: 0;
+}
+
+.drawing-canvas-wrap {
+  overflow: visible;
+}
+
+.drawing-canvas-fill {
+  position: absolute;
+  inset: 0;
+}
+
+.drawing-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.drawing-text-input {
+  position: absolute;
+  transform: translate(-2px, -14px);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  min-width: 90px;
+  z-index: 5;
+}
+
+.drawing-toolbar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 4;
+}
+
+.drawing-toolbar button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition:
+    color 0.15s var(--ease),
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease);
+}
+
+.drawing-toolbar button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.drawing-toolbar button.is-active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.drawing-toolbar button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.drawing-colors {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  margin: 0 2px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.drawing-toolbar button.drawing-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  transition:
+    transform 0.15s var(--ease),
+    border-color 0.15s var(--ease);
+}
+
+.drawing-toolbar button.drawing-color:hover {
+  transform: scale(1.15);
+}
+
+.drawing-toolbar button.drawing-color.is-active {
+  border-color: var(--text);
 }

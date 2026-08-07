@@ -7,14 +7,22 @@ import {
   useState,
 } from "react";
 import {
+  loadAnnotations,
   loadProfile,
   loadSessions,
   loadSettings,
+  saveAnnotations,
   saveProfile,
   saveSessions,
   saveSettings,
 } from "../store";
-import { DEFAULT_SETTINGS, GameSession, Profile, Settings } from "../types";
+import {
+  DEFAULT_SETTINGS,
+  GameSession,
+  MapAnnotations,
+  Profile,
+  Settings,
+} from "../types";
 
 interface AppData {
   ready: boolean;
@@ -26,6 +34,10 @@ interface AppData {
   setSessions: (
     updater: GameSession[] | ((prev: GameSession[]) => GameSession[]),
   ) => Promise<void>;
+  annotations: MapAnnotations;
+  setAnnotations: (
+    updater: MapAnnotations | ((prev: MapAnnotations) => MapAnnotations),
+  ) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -35,17 +47,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<Profile | null>(null);
   const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
   const [sessions, setSessionsState] = useState<GameSession[]>([]);
+  const [annotations, setAnnotationsState] = useState<MapAnnotations>({});
 
   useEffect(() => {
     (async () => {
-      const [p, s, sess] = await Promise.all([
+      const [p, s, sess, ann] = await Promise.all([
         loadProfile(),
         loadSettings(),
         loadSessions(),
+        loadAnnotations(),
       ]);
       setProfileState(p);
       setSettingsState(s);
       setSessionsState(sess);
+      setAnnotationsState(ann);
       setReady(true);
     })();
   }, []);
@@ -83,6 +98,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const setAnnotations = useCallback(
+    async (
+      updater: MapAnnotations | ((prev: MapAnnotations) => MapAnnotations),
+    ) => {
+      setAnnotationsState((prev) => {
+        const next =
+          typeof updater === "function"
+            ? (updater as (prev: MapAnnotations) => MapAnnotations)(prev)
+            : updater;
+        saveAnnotations(next);
+        return next;
+      });
+    },
+    [],
+  );
+
   return (
     <AppDataContext.Provider
       value={{
@@ -93,6 +124,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setSettings,
         sessions,
         setSessions,
+        annotations,
+        setAnnotations,
       }}
     >
       {children}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, WheelEvent, MouseEvent } from "react";
 import { fetchCached } from "../apiCache";
+import { useDrawingTool } from "../hooks/useDrawingTool";
 import { Game } from "../types";
+import { DrawingCanvas, DrawingOverlay, DrawingToolbar } from "./DrawingOverlay";
 
 interface Props {
   game: Game;
@@ -119,18 +121,21 @@ function ValorantMaps() {
 
       {selectedMap && (
         <div className="maps-overlay" onClick={() => setSelectedMap(null)}>
-          <div className="maps-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="maps-modal maps-modal--map" onClick={(e) => e.stopPropagation()}>
             <div className="maps-modal-header">
               <h3>{selectedMap.displayName}</h3>
               <button type="button" onClick={() => setSelectedMap(null)}>
                 x
               </button>
             </div>
-            <img
-              className="maps-modal-image"
-              src={selectedMap.displayIcon}
-              alt={selectedMap.displayName}
-            />
+            <div className="maps-modal-image-frame">
+              <img
+                className="maps-modal-image"
+                src={selectedMap.displayIcon}
+                alt={selectedMap.displayName}
+              />
+              <DrawingOverlay mapKey={`valorant-${selectedMap.uuid}`} />
+            </div>
           </div>
         </div>
       )}
@@ -169,15 +174,44 @@ function FortniteMap() {
   const [error, setError] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const [imgRect, setImgRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(
     null,
   );
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const dt = useDrawingTool("fortnite");
 
   useEffect(() => {
     fetchCached<FortniteMapResponse>("fortnite-map-v2", "https://fortnite-api.com/v1/map")
       .then((res) => setImage(res.data.images.pois))
       .catch(() => setError(true));
   }, []);
+
+  useEffect(() => {
+    if (!natural || !canvasRef.current) return;
+    const el = canvasRef.current;
+    function measure() {
+      const cw = el.clientWidth;
+      const ch = el.clientHeight;
+      if (!cw || !ch || !natural) return;
+      const containerAspect = cw / ch;
+      const imgAspect = natural.w / natural.h;
+      let width: number, height: number;
+      if (imgAspect > containerAspect) {
+        width = cw;
+        height = cw / imgAspect;
+      } else {
+        height = ch;
+        width = ch * imgAspect;
+      }
+      setImgRect({ left: (cw - width) / 2, top: (ch - height) / 2, width, height });
+    }
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [natural]);
 
   function clampZoom(z: number) {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -191,7 +225,7 @@ function FortniteMap() {
   }
 
   function handleMouseDown(e: MouseEvent<HTMLDivElement>) {
-    if (zoom === MIN_ZOOM) return;
+    if (zoom === MIN_ZOOM || dt.tool !== "cursor") return;
     dragState.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
   }
 
@@ -238,13 +272,36 @@ function FortniteMap() {
       onMouseMove={handleMouseMove}
       onMouseUp={endDrag}
       onMouseLeave={endDrag}
-      style={{ cursor: zoom > MIN_ZOOM ? "grab" : "default" }}
+      style={{ cursor: dt.tool !== "cursor" ? "default" : zoom > MIN_ZOOM ? "grab" : "default" }}
     >
       <div
         className="maps-fortnite-canvas"
+        ref={canvasRef}
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
       >
-        <img src={image} alt="Carte Fortnite" draggable={false} />
+        <img
+          src={image}
+          alt="Carte Fortnite"
+          draggable={false}
+          onLoad={(e) => {
+            const el = e.currentTarget;
+            if (el.naturalWidth && el.naturalHeight) {
+              setNatural({ w: el.naturalWidth, h: el.naturalHeight });
+            }
+          }}
+        />
+        {natural && (
+          <DrawingCanvas
+            dt={dt}
+            style={{
+              position: "absolute",
+              left: imgRect.left,
+              top: imgRect.top,
+              width: imgRect.width,
+              height: imgRect.height,
+            }}
+          />
+        )}
       </div>
 
       <div className="maps-zoom-floating">
@@ -259,6 +316,8 @@ function FortniteMap() {
           Reinitialiser la vue
         </button>
       </div>
+
+      <DrawingToolbar dt={dt} />
     </div>
   );
 }

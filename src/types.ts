@@ -87,3 +87,20 @@ export const EXE_NAME_BY_GAME: Record<Game, string> = {
   valorant: "VALORANT-Win64-Shipping.exe",
   fortnite: "FortniteClient-Win64-Shipping.exe",
 };
+
+export type ShapeType = "line" | "arrow" | "rect" | "circle" | "text" | "pen";
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Shape {
+  id: string;
+  type: ShapeType;
+  color: string;
+  points: Point[];
+  text?: string;
+}
+
+export type MapAnnotations = Record<string, Shape[]>;

@@ -1,5 +1,5 @@
 import { Store } from "@tauri-apps/plugin-store";
-import { DEFAULT_SETTINGS, GameSession, Profile, Settings } from "./types";
+import { DEFAULT_SETTINGS, GameSession, MapAnnotations, Profile, Settings } from "./types";
 
 let storePromise: Promise<Store> | null = null;
 
@@ -59,5 +59,17 @@ export async function loadSessions(): Promise<GameSession[]> {
 export async function saveSessions(sessions: GameSession[]): Promise<void> {
   const store = await getStore();
   await store.set("sessions", sessions);
+  await store.save();
+}
+
+export async function loadAnnotations(): Promise<MapAnnotations> {
+  const store = await getStore();
+  const value = await store.get<MapAnnotations>("mapAnnotations");
+  return value ?? {};
+}
+
+export async function saveAnnotations(annotations: MapAnnotations): Promise<void> {
+  const store = await getStore();
+  await store.set("mapAnnotations", annotations);
   await store.save();
 }
