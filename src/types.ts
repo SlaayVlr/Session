@@ -88,7 +88,7 @@ export const EXE_NAME_BY_GAME: Record<Game, string> = {
   fortnite: "FortniteClient-Win64-Shipping.exe",
 };
 
-export type ShapeType = "line" | "arrow" | "rect" | "circle" | "text" | "pen";
+export type ShapeType = "line" | "arrow" | "rect" | "circle" | "text" | "pen" | "icon";
 
 export interface Point {
   x: number;
@@ -101,6 +101,7 @@ export interface Shape {
   color: string;
   points: Point[];
   text?: string;
+  iconUrl?: string;
 }
 
 export type MapAnnotations = Record<string, Shape[]>;

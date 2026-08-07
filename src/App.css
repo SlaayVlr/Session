@@ -2274,6 +2274,20 @@ input[type="color"]:hover {
   animation: fadeSlideUp 0.2s var(--ease);
 }
 
+.maps-agent-ref-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.maps-agent-ref-icon img {
+  cursor: grab;
+}
+
+.maps-abilities--compact .maps-ability img {
+  cursor: grab;
+}
+
 .maps-ability {
   display: flex;
   gap: 10px;

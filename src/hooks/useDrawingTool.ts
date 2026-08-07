@@ -116,6 +116,11 @@ export function useDrawingTool(mapKey: string) {
     updateShapes(() => []);
   }
 
+  function addIcon(iconUrl: string, clientX: number, clientY: number) {
+    const p = screenToPoint(clientX, clientY);
+    updateShapes((prev) => [...prev, { id: uid(), type: "icon", color: "", points: [p], iconUrl }]);
+  }
+
   const visibleShapes = drawing ? [...shapes, drawing] : shapes;
 
   return {
@@ -136,6 +141,7 @@ export function useDrawingTool(mapKey: string) {
     cancelText,
     undo,
     clearAll,
+    addIcon,
   };
 }
 

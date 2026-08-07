@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import { CSSProperties, DragEvent } from "react";
 import { DrawingTool, PRESET_COLORS, useDrawingTool } from "../hooks/useDrawingTool";
 import { Shape } from "../types";
 import {
@@ -93,6 +93,17 @@ function ShapeRenderer({ shape }: { shape: Shape }) {
           {shape.text}
         </text>
       ) : null;
+    case "icon":
+      return shape.iconUrl ? (
+        <image
+          href={shape.iconUrl}
+          x={p0.x - 45}
+          y={p0.y - 45}
+          width={90}
+          height={90}
+          style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+        />
+      ) : null;
     default:
       return null;
   }
@@ -107,8 +118,27 @@ export function DrawingCanvas({
   style?: CSSProperties;
   className?: string;
 }) {
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    if (e.dataTransfer.types.includes("application/x-icon-url")) {
+      e.preventDefault();
+    }
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    const iconUrl = e.dataTransfer.getData("application/x-icon-url");
+    if (!iconUrl) return;
+    e.preventDefault();
+    dt.addIcon(iconUrl, e.clientX, e.clientY);
+  }
+
   return (
-    <div className={`drawing-canvas-wrap ${className ?? ""}`} ref={dt.containerRef} style={style}>
+    <div
+      className={`drawing-canvas-wrap ${className ?? ""}`}
+      ref={dt.containerRef}
+      style={style}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       <svg
         ref={dt.svgRef}
         className="drawing-svg"

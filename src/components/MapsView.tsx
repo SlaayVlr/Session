@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, WheelEvent, MouseEvent } from "react";
+import { useEffect, useRef, useState, WheelEvent, MouseEvent, DragEvent } from "react";
 import { fetchCached } from "../apiCache";
 import { useDrawingTool } from "../hooks/useDrawingTool";
 import { Game } from "../types";
@@ -45,6 +45,11 @@ interface FortniteMapResponse {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.4;
+
+function handleIconDragStart(e: DragEvent<HTMLImageElement>, url: string) {
+  e.dataTransfer.setData("application/x-icon-url", url);
+  e.dataTransfer.effectAllowed = "copy";
+}
 
 function ValorantMaps() {
   const [maps, setMaps] = useState<ValorantMap[] | null>(null);
@@ -163,17 +168,34 @@ function ValorantMaps() {
                     onClick={() => setMapAgentRef(mapAgentRef?.uuid === a.uuid ? null : a)}
                     title={a.displayName}
                   >
-                    <img src={a.displayIcon} alt={a.displayName} loading="lazy" decoding="async" />
+                    <img
+                      src={a.displayIcon}
+                      alt={a.displayName}
+                      loading="lazy"
+                      decoding="async"
+                      draggable
+                      onDragStart={(e) => handleIconDragStart(e, a.displayIcon)}
+                    />
                   </button>
                 ))}
               </div>
               {mapAgentRef && (
                 <div className="maps-abilities maps-abilities--compact">
+                  <p className="maps-agent-ref-hint">
+                    Glisse une icone sur la carte pour la placer.
+                  </p>
                   {mapAgentRef.abilities
                     .filter((ab) => ab.displayName)
                     .map((ab) => (
                       <div key={ab.slot} className="maps-ability">
-                        {ab.displayIcon && <img src={ab.displayIcon} alt={ab.displayName} />}
+                        {ab.displayIcon && (
+                          <img
+                            src={ab.displayIcon}
+                            alt={ab.displayName}
+                            draggable
+                            onDragStart={(e) => handleIconDragStart(e, ab.displayIcon!)}
+                          />
+                        )}
                         <div>
                           <div className="maps-ability-name">{ab.displayName}</div>
                           <p className="maps-ability-desc">{ab.description}</p>
