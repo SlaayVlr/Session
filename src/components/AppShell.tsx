@@ -19,7 +19,7 @@ const SUB_TABS: { id: SubTab; label: string }[] = [
 ];
 
 export function AppShell() {
-  const { profile } = useAppData();
+  const { profile, sessions } = useAppData();
   const activeGames = profile?.activeGames ?? [];
   const [currentGame, setCurrentGame] = useState<Game>(
     activeGames[0] ?? "valorant",
@@ -28,6 +28,9 @@ export function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const tabRefs = useRef<Partial<Record<SubTab, HTMLButtonElement>>>({});
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const hasActiveSession = sessions.some(
+    (s) => s.game === currentGame && s.endedAt === null,
+  );
 
   useLayoutEffect(() => {
     const el = tabRefs.current[subTab];
@@ -51,7 +54,7 @@ export function AppShell() {
           ))}
         </div>
         <div className="app-header-brand">
-          <LiveIcon />
+          {hasActiveSession && <LiveIcon />}
         </div>
         <button
           type="button"
