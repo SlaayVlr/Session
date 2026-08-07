@@ -57,6 +57,7 @@ function ValorantMaps() {
   const [selectedMap, setSelectedMap] = useState<ValorantMap | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<ValorantAgent | null>(null);
   const [mapAgentRef, setMapAgentRef] = useState<ValorantAgent | null>(null);
+  const [mapSide, setMapSide] = useState<"attack" | "defense">("attack");
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -154,9 +155,26 @@ function ValorantMaps() {
                 alt={selectedMap.displayName}
               />
               <DrawingOverlay mapKey={`valorant-${selectedMap.uuid}`} />
+
+              <div className="maps-side-toggle">
+                <button
+                  type="button"
+                  className={mapSide === "attack" ? "is-active" : ""}
+                  onClick={() => setMapSide("attack")}
+                >
+                  Attaque
+                </button>
+                <button
+                  type="button"
+                  className={mapSide === "defense" ? "is-active" : ""}
+                  onClick={() => setMapSide("defense")}
+                >
+                  Defense
+                </button>
+              </div>
             </div>
 
-            <div className="maps-agent-ref">
+            <div className={`maps-agent-ref maps-agent-ref--${mapSide}`}>
               <div className="maps-agent-ref-strip">
                 {agents.map((a) => (
                   <button

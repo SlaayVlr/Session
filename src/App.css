@@ -2240,8 +2240,8 @@ input[type="color"]:hover {
 }
 
 .maps-agent-ref-icon {
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   padding: 0;
   background: var(--surface-2);
@@ -2249,6 +2249,7 @@ input[type="color"]:hover {
   overflow: hidden;
   transition:
     border-color 0.15s var(--ease),
+    background-color 0.2s var(--ease),
     transform 0.15s var(--ease);
 }
 
@@ -2286,6 +2287,57 @@ input[type="color"]:hover {
 
 .maps-abilities--compact .maps-ability img {
   cursor: grab;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  transition: background-color 0.2s var(--ease);
+}
+
+.maps-agent-ref--attack .maps-agent-ref-icon,
+.maps-agent-ref--attack .maps-abilities--compact .maps-ability img {
+  background: color-mix(in srgb, var(--accent-valorant) 30%, var(--surface-2));
+}
+
+.maps-agent-ref--defense .maps-agent-ref-icon,
+.maps-agent-ref--defense .maps-abilities--compact .maps-ability img {
+  background: color-mix(in srgb, #3aa8ff 30%, var(--surface-2));
+}
+
+.maps-side-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 4px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.maps-side-toggle button {
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition:
+    color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+
+.maps-side-toggle button.is-active:first-child {
+  background: color-mix(in srgb, var(--accent-valorant) 100%, black 5%);
+  color: #fff;
+}
+
+.maps-side-toggle button.is-active:last-child {
+  background: #3aa8ff;
+  color: #fff;
 }
 
 .maps-ability {
