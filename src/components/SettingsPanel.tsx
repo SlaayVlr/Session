@@ -7,7 +7,7 @@ import { uid } from "../uid";
 import { Game, GAME_LABELS, ThemeMode } from "../types";
 import { ChevronIcon, TrashIcon } from "./icons";
 
-const DISCORD_CONTACT = "2zt8";
+const DISCORD_CONTACT = "@2zt8";
 
 interface Props {
   onClose: () => void;

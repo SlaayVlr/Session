@@ -2,16 +2,23 @@ import { FormEvent, useState } from "react";
 import { pickImageAsDataUrl } from "../imagePicker";
 import { Segment } from "../types";
 import { ImageIcon, XIcon } from "./icons";
-import { NoteContent } from "./NoteContent";
+import { NoteItem } from "./NoteItem";
 
 interface Props {
   segment: Segment;
   modeLabel: string;
   onAddNote: (text: string, imageDataUrl?: string) => void;
+  onEditNote: (noteId: string, newText: string) => void;
   onClose: () => void;
 }
 
-export function NoteComposer({ segment, modeLabel, onAddNote, onClose }: Props) {
+export function NoteComposer({
+  segment,
+  modeLabel,
+  onAddNote,
+  onEditNote,
+  onClose,
+}: Props) {
   const [text, setText] = useState("");
   const [imageDataUrl, setImageDataUrl] = useState<string | undefined>();
 
@@ -51,7 +58,7 @@ export function NoteComposer({ segment, modeLabel, onAddNote, onClose }: Props) 
         )}
         {segment.notes.map((note) => (
           <div key={note.id} className="note-item">
-            <NoteContent text={note.text} imageDataUrl={note.imageDataUrl} />
+            <NoteItem note={note} onEdit={(newText) => onEditNote(note.id, newText)} />
           </div>
         ))}
       </div>

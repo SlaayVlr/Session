@@ -7,7 +7,7 @@ import { uid } from "../uid";
 import { Game, ModeDef } from "../types";
 import { formatDate, formatDuration, formatTime, sessionDuration } from "../format";
 import { DownloadIcon, ImageIcon, TrashIcon, XIcon } from "./icons";
-import { NoteContent } from "./NoteContent";
+import { NoteItem } from "./NoteItem";
 
 interface Props {
   game: Game;
@@ -184,6 +184,33 @@ export function JournalView({ game }: Props) {
     );
   }
 
+  async function editNoteInSegment(
+    sessionId: string,
+    segmentId: string,
+    noteId: string,
+    newText: string,
+  ) {
+    await setSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              segments: s.segments.map((seg) =>
+                seg.id === segmentId
+                  ? {
+                      ...seg,
+                      notes: seg.notes.map((n) =>
+                        n.id === noteId ? { ...n, text: newText } : n,
+                      ),
+                    }
+                  : seg,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
+
   const modes = settings.customModes[game];
 
   return (
@@ -299,9 +326,16 @@ export function JournalView({ game }: Props) {
                         <ul className="journal-segment-notes">
                           {segment.notes.map((note) => (
                             <li key={note.id}>
-                              <NoteContent
-                                text={note.text}
-                                imageDataUrl={note.imageDataUrl}
+                              <NoteItem
+                                note={note}
+                                onEdit={(newText) =>
+                                  editNoteInSegment(
+                                    session.id,
+                                    segment.id,
+                                    note.id,
+                                    newText,
+                                  )
+                                }
                               />
                             </li>
                           ))}

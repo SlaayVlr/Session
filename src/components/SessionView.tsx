@@ -146,6 +146,29 @@ export function SessionView({ game }: Props) {
     );
   }
 
+  async function editNote(segmentId: string, noteId: string, newText: string) {
+    if (!activeSession) return;
+    await setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSession.id
+          ? {
+              ...s,
+              segments: s.segments.map((seg) =>
+                seg.id === segmentId
+                  ? {
+                      ...seg,
+                      notes: seg.notes.map((n) =>
+                        n.id === noteId ? { ...n, text: newText } : n,
+                      ),
+                    }
+                  : seg,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
+
   const selectedSegment =
     activeSession?.segments.find((s) => s.id === selectedSegmentId) ?? null;
   const selectedSegmentModeLabel = selectedSegment
@@ -195,6 +218,9 @@ export function SessionView({ game }: Props) {
           modeLabel={selectedSegmentModeLabel}
           onAddNote={(text, imageDataUrl) =>
             addNote(selectedSegment.id, text, imageDataUrl)
+          }
+          onEditNote={(noteId, newText) =>
+            editNote(selectedSegment.id, noteId, newText)
           }
           onClose={() => setSelectedSegmentId(null)}
         />

@@ -136,3 +136,57 @@ export function XIcon({ size = 13 }: { size?: number }) {
     </svg>
   );
 }
+
+export function PencilIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M17 3.5a2.1 2.1 0 0 1 3 3L8.5 18 4 19.5 5.5 15 17 3.5Z" />
+    </svg>
+  );
+}
+
+function arcPath(cx: number, cy: number, r: number, fromDeg: number, toDeg: number, steps = 8) {
+  const points: string[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const deg = fromDeg + ((toDeg - fromDeg) * i) / steps;
+    const rad = (deg * Math.PI) / 180;
+    const x = cx + r * Math.cos(rad);
+    const y = cy + r * Math.sin(rad);
+    points.push(`${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`);
+  }
+  return points.join(" ");
+}
+
+export function LiveIcon({ size = 22 }: { size?: number }) {
+  const cx = 12;
+  const cy = 12;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#e2413e"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className="live-icon"
+    >
+      <path className="live-icon-arc live-icon-arc--1" d={arcPath(cx, cy, 6.5, 140, 220)} />
+      <path className="live-icon-arc live-icon-arc--2" d={arcPath(cx, cy, 10, 130, 230)} />
+      <path className="live-icon-arc live-icon-arc--1" d={arcPath(cx, cy, 6.5, -40, 40)} />
+      <path className="live-icon-arc live-icon-arc--2" d={arcPath(cx, cy, 10, -50, 50)} />
+      <circle className="live-icon-dot" cx={cx} cy={cy} r="3.4" fill="#e2413e" stroke="none" />
+    </svg>
+  );
+}

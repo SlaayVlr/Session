@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useAppData } from "../context/AppDataContext";
 import { formatDate } from "../format";
 import { Game } from "../types";
-import { NoteContent } from "./NoteContent";
+import { NoteItem } from "./NoteItem";
 
 interface Props {
   game: Game;
@@ -14,10 +14,12 @@ interface FlatNote {
   imageDataUrl?: string;
   createdAt: number;
   modeId: string;
+  sessionId: string;
+  segmentId: string;
 }
 
 export function NotesView({ game }: Props) {
-  const { sessions, settings } = useAppData();
+  const { sessions, settings, setSessions } = useAppData();
   const [modeFilter, setModeFilter] = useState<string>("all");
 
   const modes = settings.customModes[game];
@@ -36,12 +38,41 @@ export function NotesView({ game }: Props) {
             imageDataUrl: note.imageDataUrl,
             createdAt: note.createdAt,
             modeId: segment.modeId,
+            sessionId: session.id,
+            segmentId: segment.id,
           });
         }
       }
     }
     return flat.sort((a, b) => b.createdAt - a.createdAt);
   }, [sessions, game, modeFilter]);
+
+  async function editNote(
+    sessionId: string,
+    segmentId: string,
+    noteId: string,
+    newText: string,
+  ) {
+    await setSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              segments: s.segments.map((seg) =>
+                seg.id === segmentId
+                  ? {
+                      ...seg,
+                      notes: seg.notes.map((n) =>
+                        n.id === noteId ? { ...n, text: newText } : n,
+                      ),
+                    }
+                  : seg,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
 
   return (
     <div className="notes-view">
@@ -83,7 +114,12 @@ export function NotesView({ game }: Props) {
                   {formatDate(note.createdAt)}
                 </span>
               </div>
-              <NoteContent text={note.text} imageDataUrl={note.imageDataUrl} />
+              <NoteItem
+                note={note}
+                onEdit={(newText) =>
+                  editNote(note.sessionId, note.segmentId, note.id, newText)
+                }
+              />
             </div>
           ))}
         </div>

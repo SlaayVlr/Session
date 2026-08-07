@@ -7,7 +7,7 @@ import { NotesView } from "./NotesView";
 import { StatsView } from "./StatsView";
 import { SettingsPanel } from "./SettingsPanel";
 import { UpdateBanner } from "./UpdateBanner";
-import { GearIcon } from "./icons";
+import { GearIcon, LiveIcon } from "./icons";
 
 type SubTab = "session" | "journal" | "notes" | "stats";
 
@@ -49,6 +49,9 @@ export function AppShell() {
               {GAME_LABELS[game]}
             </button>
           ))}
+        </div>
+        <div className="app-header-brand">
+          <LiveIcon />
         </div>
         <button
           type="button"
