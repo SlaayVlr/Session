@@ -27,6 +27,7 @@ interface ValorantMap {
   displayName: string;
   displayIcon: string;
   listViewIcon: string;
+  tacticalDescription: string | null;
 }
 
 interface ValorantMapsResponse {
@@ -50,6 +51,7 @@ function ValorantMaps() {
   const [agents, setAgents] = useState<ValorantAgent[] | null>(null);
   const [selectedMap, setSelectedMap] = useState<ValorantMap | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<ValorantAgent | null>(null);
+  const [mapAgentRef, setMapAgentRef] = useState<ValorantAgent | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ function ValorantMaps() {
       ),
     ])
       .then(([mapsRes, agentsRes]) => {
-        const mapList = mapsRes.data.filter((m) => m.displayName !== "The Range");
+        const mapList = mapsRes.data.filter((m) => m.tacticalDescription !== null);
         setMaps(mapList);
         setAgents(agentsRes.data);
       })
@@ -120,11 +122,23 @@ function ValorantMaps() {
       </div>
 
       {selectedMap && (
-        <div className="maps-overlay" onClick={() => setSelectedMap(null)}>
+        <div
+          className="maps-overlay"
+          onClick={() => {
+            setSelectedMap(null);
+            setMapAgentRef(null);
+          }}
+        >
           <div className="maps-modal maps-modal--map" onClick={(e) => e.stopPropagation()}>
             <div className="maps-modal-header">
               <h3>{selectedMap.displayName}</h3>
-              <button type="button" onClick={() => setSelectedMap(null)}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMap(null);
+                  setMapAgentRef(null);
+                }}
+              >
                 x
               </button>
             </div>
@@ -135,6 +149,39 @@ function ValorantMaps() {
                 alt={selectedMap.displayName}
               />
               <DrawingOverlay mapKey={`valorant-${selectedMap.uuid}`} />
+            </div>
+
+            <div className="maps-agent-ref">
+              <div className="maps-agent-ref-strip">
+                {agents.map((a) => (
+                  <button
+                    key={a.uuid}
+                    type="button"
+                    className={`maps-agent-ref-icon ${
+                      mapAgentRef?.uuid === a.uuid ? "is-active" : ""
+                    }`}
+                    onClick={() => setMapAgentRef(mapAgentRef?.uuid === a.uuid ? null : a)}
+                    title={a.displayName}
+                  >
+                    <img src={a.displayIcon} alt={a.displayName} loading="lazy" decoding="async" />
+                  </button>
+                ))}
+              </div>
+              {mapAgentRef && (
+                <div className="maps-abilities maps-abilities--compact">
+                  {mapAgentRef.abilities
+                    .filter((ab) => ab.displayName)
+                    .map((ab) => (
+                      <div key={ab.slot} className="maps-ability">
+                        {ab.displayIcon && <img src={ab.displayIcon} alt={ab.displayName} />}
+                        <div>
+                          <div className="maps-ability-name">{ab.displayName}</div>
+                          <p className="maps-ability-desc">{ab.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -174,12 +221,9 @@ function FortniteMap() {
   const [error, setError] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
-  const [imgRect, setImgRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(
     null,
   );
-  const canvasRef = useRef<HTMLDivElement>(null);
   const dt = useDrawingTool("fortnite");
 
   useEffect(() => {
@@ -187,31 +231,6 @@ function FortniteMap() {
       .then((res) => setImage(res.data.images.pois))
       .catch(() => setError(true));
   }, []);
-
-  useEffect(() => {
-    if (!natural || !canvasRef.current) return;
-    const el = canvasRef.current;
-    function measure() {
-      const cw = el.clientWidth;
-      const ch = el.clientHeight;
-      if (!cw || !ch || !natural) return;
-      const containerAspect = cw / ch;
-      const imgAspect = natural.w / natural.h;
-      let width: number, height: number;
-      if (imgAspect > containerAspect) {
-        width = cw;
-        height = cw / imgAspect;
-      } else {
-        height = ch;
-        width = ch * imgAspect;
-      }
-      setImgRect({ left: (cw - width) / 2, top: (ch - height) / 2, width, height });
-    }
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [natural]);
 
   function clampZoom(z: number) {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -276,32 +295,10 @@ function FortniteMap() {
     >
       <div
         className="maps-fortnite-canvas"
-        ref={canvasRef}
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
       >
-        <img
-          src={image}
-          alt="Carte Fortnite"
-          draggable={false}
-          onLoad={(e) => {
-            const el = e.currentTarget;
-            if (el.naturalWidth && el.naturalHeight) {
-              setNatural({ w: el.naturalWidth, h: el.naturalHeight });
-            }
-          }}
-        />
-        {natural && (
-          <DrawingCanvas
-            dt={dt}
-            style={{
-              position: "absolute",
-              left: imgRect.left,
-              top: imgRect.top,
-              width: imgRect.width,
-              height: imgRect.height,
-            }}
-          />
-        )}
+        <img src={image} alt="Carte Fortnite" draggable={false} />
+        <DrawingCanvas dt={dt} className="drawing-canvas-contain" />
       </div>
 
       <div className="maps-zoom-floating">
