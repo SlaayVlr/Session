@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { fetchCached } from "../apiCache";
 import { Game } from "../types";
 
 interface Props {
@@ -16,7 +17,6 @@ interface ValorantAgent {
   uuid: string;
   displayName: string;
   displayIcon: string;
-  fullPortrait: string | null;
   abilities: ValorantAbility[];
 }
 
@@ -24,7 +24,19 @@ interface ValorantMap {
   uuid: string;
   displayName: string;
   displayIcon: string;
-  splash: string;
+  listViewIcon: string;
+}
+
+interface ValorantMapsResponse {
+  data: ValorantMap[];
+}
+
+interface ValorantAgentsResponse {
+  data: ValorantAgent[];
+}
+
+interface FortniteMapResponse {
+  data: { images: { pois: string } };
 }
 
 function ValorantMaps() {
@@ -36,15 +48,17 @@ function ValorantMaps() {
 
   useEffect(() => {
     Promise.all([
-      fetch("https://valorant-api.com/v1/maps?language=fr-FR").then((r) => r.json()),
-      fetch(
+      fetchCached<ValorantMapsResponse>(
+        "maps-v1",
+        "https://valorant-api.com/v1/maps?language=fr-FR",
+      ),
+      fetchCached<ValorantAgentsResponse>(
+        "agents-v1",
         "https://valorant-api.com/v1/agents?language=fr-FR&isPlayableCharacter=true",
-      ).then((r) => r.json()),
+      ),
     ])
       .then(([mapsRes, agentsRes]) => {
-        const mapList: ValorantMap[] = mapsRes.data.filter(
-          (m: ValorantMap) => m.displayName !== "The Range",
-        );
+        const mapList = mapsRes.data.filter((m) => m.displayName !== "The Range");
         setMaps(mapList);
         setAgents(agentsRes.data);
       })
@@ -75,7 +89,7 @@ function ValorantMaps() {
               className="maps-card"
               onClick={() => setSelectedMap(m)}
             >
-              <img src={m.splash} alt={m.displayName} />
+              <img src={m.listViewIcon} alt={m.displayName} loading="lazy" decoding="async" />
               <span>{m.displayName}</span>
             </button>
           ))}
@@ -92,7 +106,7 @@ function ValorantMaps() {
               className="maps-agent-card"
               onClick={() => setSelectedAgent(a)}
             >
-              <img src={a.displayIcon} alt={a.displayName} />
+              <img src={a.displayIcon} alt={a.displayName} loading="lazy" decoding="async" />
               <span>{a.displayName}</span>
             </button>
           ))}
@@ -108,7 +122,11 @@ function ValorantMaps() {
                 x
               </button>
             </div>
-            <img className="maps-modal-image" src={selectedMap.displayIcon} alt={selectedMap.displayName} />
+            <img
+              className="maps-modal-image"
+              src={selectedMap.displayIcon}
+              alt={selectedMap.displayName}
+            />
           </div>
         </div>
       )}
@@ -147,8 +165,7 @@ function FortniteMap() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch("https://fortnite-api.com/v1/map")
-      .then((r) => r.json())
+    fetchCached<FortniteMapResponse>("fortnite-map-v1", "https://fortnite-api.com/v1/map")
       .then((res) => setImage(res.data.images.pois))
       .catch(() => setError(true));
   }, []);
