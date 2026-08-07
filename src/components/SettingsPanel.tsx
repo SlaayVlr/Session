@@ -1,9 +1,13 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { open } from "@tauri-apps/plugin-dialog";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useAppData } from "../context/AppDataContext";
+import { useUpdater } from "../hooks/useUpdater";
 import { uid } from "../uid";
 import { Game, GAME_LABELS, ThemeMode } from "../types";
 import { ChevronIcon, TrashIcon } from "./icons";
+
+const DISCORD_CONTACT = "2zt8";
 
 interface Props {
   onClose: () => void;
@@ -41,6 +45,12 @@ export function SettingsPanel({ onClose }: Props) {
   const [newModeGame, setNewModeGame] = useState<Game>("valorant");
   const [newModeLabel, setNewModeLabel] = useState("");
   const [newModeColor, setNewModeColor] = useState("#888888");
+  const [appVersion, setAppVersion] = useState("");
+  const { status, update, progress, checkForUpdate, installUpdate } = useUpdater();
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => {});
+  }, []);
 
   function handlePseudoChange(value: string) {
     setPseudoInput(value);
@@ -303,6 +313,44 @@ export function SettingsPanel({ onClose }: Props) {
             + Ajouter un mode
           </button>
         </SettingsChapter>
+
+        <div className="settings-footer">
+          <div className="settings-update-row">
+            <button
+              type="button"
+              className="settings-browse-button"
+              onClick={checkForUpdate}
+              disabled={status === "checking" || status === "downloading"}
+            >
+              {status === "checking" ? "Verification..." : "Verifier les mises a jour"}
+            </button>
+            {status === "up-to-date" && (
+              <span className="settings-update-status">A jour</span>
+            )}
+            {status === "found" && update && (
+              <button
+                type="button"
+                className="settings-browse-button settings-update-install"
+                onClick={installUpdate}
+              >
+                Installer v{update.version}
+              </button>
+            )}
+            {status === "downloading" && (
+              <span className="settings-update-status">{progress}%</span>
+            )}
+            {status === "ready" && (
+              <span className="settings-update-status">Redemarrage...</span>
+            )}
+            {status === "error" && (
+              <span className="settings-update-status">Echec de la verification</span>
+            )}
+          </div>
+          <div className="settings-meta">
+            <span>Session{appVersion ? ` v${appVersion}` : ""}</span>
+            <span>Discord : {DISCORD_CONTACT}</span>
+          </div>
+        </div>
       </div>
 
       {addModeOpen && (
