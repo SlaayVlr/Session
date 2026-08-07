@@ -154,7 +154,10 @@ function ValorantMaps() {
                 src={selectedMap.displayIcon}
                 alt={selectedMap.displayName}
               />
-              <DrawingOverlay mapKey={`valorant-${selectedMap.uuid}`} />
+              <DrawingOverlay
+                mapKey={`valorant-${selectedMap.uuid}`}
+                iconColor={mapSide === "attack" ? "#e2413e" : "#3aa8ff"}
+              />
 
               <div className="maps-side-toggle">
                 <button

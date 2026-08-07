@@ -93,17 +93,25 @@ function ShapeRenderer({ shape }: { shape: Shape }) {
           {shape.text}
         </text>
       ) : null;
-    case "icon":
-      return shape.iconUrl ? (
-        <image
-          href={shape.iconUrl}
-          x={p0.x - 45}
-          y={p0.y - 45}
-          width={90}
-          height={90}
-          style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
-        />
-      ) : null;
+    case "icon": {
+      if (!shape.iconUrl) return null;
+      const size = 44;
+      return (
+        <g>
+          {shape.color && (
+            <circle cx={p0.x} cy={p0.y} r={size / 2 + 5} fill={shape.color} />
+          )}
+          <image
+            href={shape.iconUrl}
+            x={p0.x - size / 2}
+            y={p0.y - size / 2}
+            width={size}
+            height={size}
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+          />
+        </g>
+      );
+    }
     default:
       return null;
   }
@@ -113,10 +121,12 @@ export function DrawingCanvas({
   dt,
   style,
   className,
+  iconColor,
 }: {
   dt: DrawingTool;
   style?: CSSProperties;
   className?: string;
+  iconColor?: string;
 }) {
   function handleDragOver(e: DragEvent<HTMLDivElement>) {
     if (e.dataTransfer.types.includes("application/x-icon-url")) {
@@ -128,7 +138,7 @@ export function DrawingCanvas({
     const iconUrl = e.dataTransfer.getData("application/x-icon-url");
     if (!iconUrl) return;
     e.preventDefault();
-    dt.addIcon(iconUrl, e.clientX, e.clientY);
+    dt.addIcon(iconUrl, e.clientX, e.clientY, iconColor);
   }
 
   return (
@@ -269,11 +279,17 @@ export function DrawingToolbar({ dt }: { dt: DrawingTool }) {
   );
 }
 
-export function DrawingOverlay({ mapKey }: { mapKey: string }) {
+export function DrawingOverlay({
+  mapKey,
+  iconColor,
+}: {
+  mapKey: string;
+  iconColor?: string;
+}) {
   const dt = useDrawingTool(mapKey);
   return (
     <div className="drawing-overlay-container">
-      <DrawingCanvas dt={dt} className="drawing-canvas-fill" />
+      <DrawingCanvas dt={dt} className="drawing-canvas-fill" iconColor={iconColor} />
       <DrawingToolbar dt={dt} />
     </div>
   );
