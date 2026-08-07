@@ -95,7 +95,7 @@ function ShapeRenderer({ shape }: { shape: Shape }) {
       ) : null;
     case "icon": {
       if (!shape.iconUrl) return null;
-      const size = 44;
+      const size = 28;
       return (
         <g>
           {shape.color && (
