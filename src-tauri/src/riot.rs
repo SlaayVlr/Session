@@ -247,6 +247,14 @@ async fn fetch_client_version() -> Result<String, String> {
         .ok_or_else(|| "Version du client introuvable".to_string())
 }
 
+fn check_api_error(json: &Value) -> Result<(), String> {
+    if let Some(code) = json["errorCode"].as_str() {
+        let message = json["message"].as_str().unwrap_or(code);
+        return Err(format!("Erreur API Riot ({code}): {message}"));
+    }
+    Ok(())
+}
+
 fn header_value(value: &str) -> HeaderValue {
     HeaderValue::from_str(value).unwrap_or_else(|_| HeaderValue::from_static(""))
 }
@@ -275,6 +283,7 @@ async fn fetch_match_ids(region: &str, puuid: &str, headers: &HeaderMap) -> Resu
         .json()
         .await
         .map_err(|e| format!("Reponse historique invalide: {e:?}"))?;
+    check_api_error(&json)?;
     let history = json["History"].as_array().cloned().unwrap_or_default();
     Ok(history
         .iter()
@@ -548,7 +557,7 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
     let client = Client::new();
 
     let cu_url = format!(
-        "https://pd.{region}.a.pvp.net/mmr/v1/players/{puuid}/competitiveupdates?startIndex=0&endIndex=30&queueId=competitive"
+        "https://pd.{region}.a.pvp.net/mmr/v1/players/{puuid}/competitiveupdates?startIndex=0&endIndex=20&queueId=competitive"
     );
     let cu_resp = client
         .get(cu_url)
@@ -560,6 +569,7 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
         .json()
         .await
         .map_err(|e| format!("Reponse rang invalide: {e:?}"))?;
+    check_api_error(&cu_json)?;
     let cu_matches = cu_json["Matches"].as_array().cloned().unwrap_or_default();
 
     if cu_matches.is_empty() {
@@ -760,6 +770,7 @@ pub async fn get_valorant_match_detail(match_id: String) -> Result<ValorantMatch
         .json()
         .await
         .map_err(|e| format!("Reponse details de partie invalide: {e:?}"))?;
+    check_api_error(&json)?;
 
     let players_json = json["players"].as_array().cloned().unwrap_or_default();
     let puuids: Vec<String> = players_json
