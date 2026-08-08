@@ -563,7 +563,9 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
     let cu_matches = cu_json["Matches"].as_array().cloned().unwrap_or_default();
 
     if cu_matches.is_empty() {
-        return Err("Aucune partie competitive trouvee".to_string());
+        let raw = cu_json.to_string();
+        let preview: String = raw.chars().take(600).collect();
+        return Err(format!("Aucune partie competitive trouvee. Reponse brute: {preview}"));
     }
 
     let season_id = cu_matches[0]["SeasonID"].as_str().unwrap_or_default().to_string();
