@@ -81,6 +81,38 @@ interface MatchDetail {
   players: ScoreboardPlayer[];
 }
 
+interface AgentPlayCount {
+  agentId: string;
+  games: number;
+}
+
+interface ActOverview {
+  seasonId: string;
+  currentTier: number;
+  currentRr: number;
+  peakTier: number;
+  peakRr: number;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kdRatio: number;
+  kadRatio: number;
+  acs: number;
+  damagePerRound: number;
+  headshotPct: number;
+  kastPct: number;
+  firstBloods: number;
+  aces: number;
+  flawlessRounds: number;
+  topAgentsAct: AgentPlayCount[];
+  topAgentsRecent: AgentPlayCount[];
+  recentGamesAnalyzed: number;
+}
+
 const QUEUE_LABELS: Record<string, string> = {
   competitive: "Competitive",
   unrated: "Non classee",
@@ -98,6 +130,8 @@ export function RiotStats() {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<ValorantProfile | null>(null);
+  const [overview, setOverview] = useState<ActOverview | null>(null);
+  const [overviewError, setOverviewError] = useState("");
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [tiers, setTiers] = useState<TierInfo[]>([]);
@@ -128,6 +162,8 @@ export function RiotStats() {
   async function load() {
     setStatus("loading");
     setError("");
+    setOverviewError("");
+    setOverview(null);
     try {
       const [result, mapsRes, agentsRes, tiersRes] = await Promise.all([
         invoke<ValorantProfile>("get_valorant_profile"),
@@ -149,6 +185,16 @@ export function RiotStats() {
     } catch (e) {
       setError(typeof e === "string" ? e : "Impossible de recuperer tes stats.");
       setStatus("error");
+      return;
+    }
+
+    try {
+      const overviewResult = await invoke<ActOverview>("get_valorant_act_overview");
+      setOverview(overviewResult);
+    } catch (e) {
+      setOverviewError(
+        typeof e === "string" ? e : "Impossible de calculer les stats d'acte.",
+      );
     }
   }
 
@@ -188,22 +234,147 @@ export function RiotStats() {
         </p>
       )}
 
-      {status === "ready" && profile && (
-        <>
-          {profile.rank && (
+      {status === "ready" && overviewError && (
+        <p className="riot-stats-error">{overviewError}</p>
+      )}
+
+      {status === "ready" && overview && (
+        <div className="riot-overview">
+          <div className="riot-overview-ranks">
             <div className="riot-rank-card">
-              {tierInfo(profile.rank.tier)?.smallIcon && (
-                <img src={tierInfo(profile.rank.tier)!.smallIcon!} alt="" />
+              {tierInfo(overview.currentTier)?.smallIcon && (
+                <img src={tierInfo(overview.currentTier)!.smallIcon!} alt="" />
               )}
               <div>
+                <div className="riot-rank-label">Rang actuel</div>
                 <div className="riot-rank-name">
-                  {tierInfo(profile.rank.tier)?.tierName ?? `Rang ${profile.rank.tier}`}
+                  {tierInfo(overview.currentTier)?.tierName ?? `Rang ${overview.currentTier}`}
                 </div>
-                <div className="riot-rank-rr">{profile.rank.rankedRating} RR</div>
+                <div className="riot-rank-rr">{overview.currentRr} RR</div>
+              </div>
+            </div>
+            <div className="riot-rank-card">
+              {tierInfo(overview.peakTier)?.smallIcon && (
+                <img src={tierInfo(overview.peakTier)!.smallIcon!} alt="" />
+              )}
+              <div>
+                <div className="riot-rank-label">Rang peak (cet acte)</div>
+                <div className="riot-rank-name">
+                  {tierInfo(overview.peakTier)?.tierName ?? `Rang ${overview.peakTier}`}
+                </div>
+                <div className="riot-rank-rr">{overview.peakRr} RR</div>
+              </div>
+            </div>
+          </div>
+
+          <p className="riot-overview-sub">
+            {overview.gamesPlayed} partie{overview.gamesPlayed > 1 ? "s" : ""} competitive
+            {overview.gamesPlayed > 1 ? "s" : ""} cet acte - {overview.wins}V / {overview.losses}D
+          </p>
+
+          <div className="stats-cards riot-overview-tiles">
+            <div className="stats-card">
+              <span className="stats-card-value">{Math.round(overview.damagePerRound)}</span>
+              <span className="stats-card-label">Degats / round</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-card-value">{overview.kdRatio.toFixed(2)}</span>
+              <span className="stats-card-label">Ratio K/D</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-card-value">{Math.round(overview.headshotPct)}%</span>
+              <span className="stats-card-label">Tirs a la tete</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-card-value">{Math.round(overview.winRate)}%</span>
+              <span className="stats-card-label">Victoires</span>
+            </div>
+          </div>
+
+          <div className="riot-overview-grid">
+            <div>
+              <span className="riot-overview-grid-value">{overview.wins}</span>
+              <span className="riot-overview-grid-label">Victoires</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{Math.round(overview.kastPct)}%</span>
+              <span className="riot-overview-grid-label">KAST</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.kills}</span>
+              <span className="riot-overview-grid-label">Kills</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.deaths}</span>
+              <span className="riot-overview-grid-label">Morts</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.assists}</span>
+              <span className="riot-overview-grid-label">Assists</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{Math.round(overview.acs)}</span>
+              <span className="riot-overview-grid-label">ACS</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.kadRatio.toFixed(2)}</span>
+              <span className="riot-overview-grid-label">Ratio KAD</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.firstBloods}</span>
+              <span className="riot-overview-grid-label">First bloods</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.flawlessRounds}</span>
+              <span className="riot-overview-grid-label">Rounds flawless</span>
+            </div>
+            <div>
+              <span className="riot-overview-grid-value">{overview.aces}</span>
+              <span className="riot-overview-grid-label">Aces</span>
+            </div>
+          </div>
+
+          {overview.topAgentsAct.length > 0 && (
+            <div className="riot-overview-agents">
+              <span className="riot-overview-agents-label">Agents joues cet acte</span>
+              <div className="riot-overview-agents-row">
+                {overview.topAgentsAct.map((a) => {
+                  const agent = agentInfo(a.agentId);
+                  return (
+                    <div key={a.agentId} className="riot-overview-agent">
+                      {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
+                      <span>{a.games}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
+          {overview.topAgentsRecent.length > 0 && (
+            <div className="riot-overview-agents">
+              <span className="riot-overview-agents-label">
+                Agents joues sur tes {overview.recentGamesAnalyzed} dernieres parties
+              </span>
+              <div className="riot-overview-agents-row">
+                {overview.topAgentsRecent.map((a) => {
+                  const agent = agentInfo(a.agentId);
+                  return (
+                    <div key={a.agentId} className="riot-overview-agent">
+                      {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
+                      <span>{a.games}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {status === "ready" && profile && (
+        <>
+          <span className="riot-overview-agents-label">Dernieres parties</span>
           <div className="riot-match-list">
             {profile.matches.length === 0 && (
               <p className="journal-empty">Aucune partie recente trouvee.</p>

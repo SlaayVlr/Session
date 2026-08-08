@@ -2076,6 +2076,14 @@ input[type="color"]:hover {
   object-fit: contain;
 }
 
+.riot-rank-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
 .riot-rank-name {
   font-size: 14px;
   font-weight: 700;
@@ -2083,6 +2091,99 @@ input[type="color"]:hover {
 
 .riot-rank-rr {
   font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.riot-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.riot-overview-ranks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.riot-overview-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: -6px 0 0;
+}
+
+.riot-overview-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.riot-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px 6px;
+}
+
+.riot-overview-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.riot-overview-grid-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.riot-overview-grid-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.riot-overview-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.riot-overview-agents-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.riot-overview-agents-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.riot-overview-agent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px 4px 4px;
+}
+
+.riot-overview-agent img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+
+.riot-overview-agent span {
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text-secondary);
 }
 
