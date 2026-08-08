@@ -1,24 +1,34 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppData } from "../context/AppDataContext";
 import { Game, GAME_LABELS } from "../types";
 import { SessionView } from "./SessionView";
 import { JournalView } from "./JournalView";
 import { NotesView } from "./NotesView";
 import { StatsView } from "./StatsView";
+import { RiotStats } from "./RiotStats";
 import { MapsView } from "./MapsView";
 import { SettingsPanel } from "./SettingsPanel";
 import { UpdateBanner } from "./UpdateBanner";
 import { GearIcon, LiveIcon } from "./icons";
 
-type SubTab = "session" | "journal" | "notes" | "stats" | "maps";
+type SubTab = "session" | "journal" | "notes" | "stats" | "tracker" | "maps";
 
-const SUB_TABS: { id: SubTab; label: string }[] = [
+const BASE_SUB_TABS: { id: SubTab; label: string }[] = [
   { id: "session", label: "Session" },
   { id: "journal", label: "Journal" },
   { id: "notes", label: "Notes" },
   { id: "stats", label: "Stats" },
   { id: "maps", label: "Maps" },
 ];
+
+function subTabsFor(game: Game): { id: SubTab; label: string }[] {
+  if (game !== "valorant") return BASE_SUB_TABS;
+  return [
+    ...BASE_SUB_TABS.slice(0, 4),
+    { id: "tracker", label: "Tracker" },
+    ...BASE_SUB_TABS.slice(4),
+  ];
+}
 
 export function AppShell() {
   const { profile, sessions } = useAppData();
@@ -33,11 +43,18 @@ export function AppShell() {
   const hasActiveSession = sessions.some(
     (s) => s.game === currentGame && s.endedAt === null,
   );
+  const subTabs = subTabsFor(currentGame);
+
+  useEffect(() => {
+    if (subTab === "tracker" && currentGame !== "valorant") {
+      setSubTab("session");
+    }
+  }, [currentGame, subTab]);
 
   useLayoutEffect(() => {
     const el = tabRefs.current[subTab];
     if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
-  }, [subTab]);
+  }, [subTab, currentGame]);
 
   return (
     <div className={`app-shell app-shell--${currentGame}`}>
@@ -69,7 +86,7 @@ export function AppShell() {
       </header>
 
       <nav className="sub-tabs">
-        {SUB_TABS.map((tab) => (
+        {subTabs.map((tab) => (
           <button
             key={tab.id}
             ref={(el) => {
@@ -93,6 +110,7 @@ export function AppShell() {
         {subTab === "journal" && <JournalView game={currentGame} />}
         {subTab === "notes" && <NotesView game={currentGame} />}
         {subTab === "stats" && <StatsView game={currentGame} />}
+        {subTab === "tracker" && currentGame === "valorant" && <RiotStats />}
         {subTab === "maps" && <MapsView game={currentGame} />}
       </main>
 
