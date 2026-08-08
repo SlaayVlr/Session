@@ -28,6 +28,10 @@ export function useDrawingTool(mapKey: string) {
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [drawing, setDrawing] = useState<Shape | null>(null);
   const [editingText, setEditingText] = useState<EditingText | null>(null);
+  const [movingPreview, setMovingPreview] = useState<{ id: string; points: Point[] } | null>(
+    null,
+  );
+  const movingRef = useRef<{ id: string; start: Point; originalPoints: Point[] } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +77,26 @@ export function useDrawingTool(mapKey: string) {
     });
   }
 
+  function handleShapePointerDown(e: ReactMouseEvent<SVGGElement>, shape: Shape) {
+    if (tool !== "cursor") return;
+    e.stopPropagation();
+    const p = screenToPoint(e.clientX, e.clientY);
+    movingRef.current = { id: shape.id, start: p, originalPoints: shape.points };
+  }
+
   function handlePointerMove(e: ReactMouseEvent<SVGSVGElement>) {
+    if (movingRef.current) {
+      e.stopPropagation();
+      const p = screenToPoint(e.clientX, e.clientY);
+      const dx = p.x - movingRef.current.start.x;
+      const dy = p.y - movingRef.current.start.y;
+      const points = movingRef.current.originalPoints.map((pt) => ({
+        x: pt.x + dx,
+        y: pt.y + dy,
+      }));
+      setMovingPreview({ id: movingRef.current.id, points });
+      return;
+    }
     if (!drawing) return;
     e.stopPropagation();
     const p = screenToPoint(e.clientX, e.clientY);
@@ -85,6 +108,19 @@ export function useDrawingTool(mapKey: string) {
   }
 
   function handlePointerUp(e: ReactMouseEvent<SVGSVGElement>) {
+    if (movingRef.current) {
+      e.stopPropagation();
+      if (movingPreview) {
+        const id = movingRef.current.id;
+        const finalPoints = movingPreview.points;
+        updateShapes((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, points: finalPoints } : s)),
+        );
+      }
+      movingRef.current = null;
+      setMovingPreview(null);
+      return;
+    }
     if (!drawing) return;
     e.stopPropagation();
     updateShapes((prev) => [...prev, drawing]);
@@ -124,7 +160,9 @@ export function useDrawingTool(mapKey: string) {
     ]);
   }
 
-  const visibleShapes = drawing ? [...shapes, drawing] : shapes;
+  const visibleShapes = (drawing ? [...shapes, drawing] : shapes).map((s) =>
+    movingPreview && movingPreview.id === s.id ? { ...s, points: movingPreview.points } : s,
+  );
 
   return {
     shapes,
@@ -140,6 +178,7 @@ export function useDrawingTool(mapKey: string) {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handleShapePointerDown,
     commitText,
     cancelText,
     undo,

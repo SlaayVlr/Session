@@ -1,5 +1,5 @@
-import { CSSProperties, DragEvent } from "react";
-import { DrawingTool, PRESET_COLORS, useDrawingTool } from "../hooks/useDrawingTool";
+import { CSSProperties, DragEvent, MouseEvent as ReactMouseEvent } from "react";
+import { DrawingTool, PRESET_COLORS, Tool, useDrawingTool } from "../hooks/useDrawingTool";
 import { Shape } from "../types";
 import {
   ArrowToolIcon,
@@ -22,7 +22,7 @@ function arrowHead(x1: number, y1: number, x2: number, y2: number, size = 28): s
   },${y2 + size * Math.sin(a2)}`;
 }
 
-function ShapeRenderer({ shape }: { shape: Shape }) {
+function renderShapeGeometry(shape: Shape) {
   const [p0, p1] = shape.points;
   switch (shape.type) {
     case "line":
@@ -117,6 +117,28 @@ function ShapeRenderer({ shape }: { shape: Shape }) {
   }
 }
 
+function ShapeRenderer({
+  shape,
+  tool,
+  onShapePointerDown,
+}: {
+  shape: Shape;
+  tool: Tool;
+  onShapePointerDown: (e: ReactMouseEvent<SVGGElement>, shape: Shape) => void;
+}) {
+  const geometry = renderShapeGeometry(shape);
+  if (!geometry) return null;
+  const interactive = tool === "cursor";
+  return (
+    <g
+      style={{ pointerEvents: interactive ? "auto" : "none", cursor: interactive ? "grab" : undefined }}
+      onMouseDown={interactive ? (e) => onShapePointerDown(e, shape) : undefined}
+    >
+      {geometry}
+    </g>
+  );
+}
+
 export function DrawingCanvas({
   dt,
   style,
@@ -164,7 +186,12 @@ export function DrawingCanvas({
         }}
       >
         {dt.visibleShapes.map((s) => (
-          <ShapeRenderer key={s.id} shape={s} />
+          <ShapeRenderer
+            key={s.id}
+            shape={s}
+            tool={dt.tool}
+            onShapePointerDown={dt.handleShapePointerDown}
+          />
         ))}
       </svg>
 
