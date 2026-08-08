@@ -8,6 +8,7 @@ import {
   weekLabel,
 } from "../format";
 import { Game, GameSession } from "../types";
+import { RiotStats } from "./RiotStats";
 
 interface Props {
   game: Game;
@@ -274,6 +275,8 @@ export function StatsView({ game }: Props) {
           </div>
         ))}
       </div>
+
+      {game === "valorant" && <RiotStats />}
     </div>
   );
 }

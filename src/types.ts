@@ -102,6 +102,7 @@ export interface Shape {
   points: Point[];
   text?: string;
   iconUrl?: string;
+  sizeScale?: number;
 }
 
 export type MapAnnotations = Record<string, Shape[]>;

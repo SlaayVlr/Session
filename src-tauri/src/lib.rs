@@ -2,6 +2,8 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use std::fs;
 use std::process::Command;
 
+mod riot;
+
 #[tauri::command]
 fn launch_game(exe_path: String) -> Result<(), String> {
     Command::new(&exe_path)
@@ -69,7 +71,8 @@ pub fn run() {
             launch_game,
             is_process_running,
             write_text_file,
-            read_image_as_base64
+            read_image_as_base64,
+            riot::get_valorant_profile
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

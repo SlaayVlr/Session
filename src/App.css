@@ -2037,6 +2037,151 @@ input[type="color"]:hover {
   border-radius: 50%;
 }
 
+.riot-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.riot-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.riot-stats-hint,
+.riot-stats-error {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.riot-stats-error {
+  color: var(--accent-valorant);
+}
+
+.riot-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.riot-rank-card img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.riot-rank-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.riot-rank-rr {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.riot-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.riot-match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.riot-match-row--win {
+  border-left-color: #34c759;
+}
+
+.riot-match-row--loss {
+  border-left-color: var(--accent-valorant);
+}
+
+.riot-match-map {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.riot-match-agent {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+
+.riot-match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.riot-match-map-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.riot-match-queue {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.riot-match-score {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.riot-match-kda {
+  color: var(--text-secondary);
+  min-width: 56px;
+  text-align: center;
+}
+
+.riot-match-date {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.riot-match-result {
+  font-weight: 600;
+  min-width: 56px;
+  text-align: right;
+}
+
+.riot-match-row--win .riot-match-result {
+  color: #34c759;
+}
+
+.riot-match-row--loss .riot-match-result {
+  color: var(--accent-valorant);
+}
+
 /* Maps view */
 
 .maps-view {
@@ -2500,6 +2645,47 @@ input[type="color"]:hover {
   outline: none;
   min-width: 90px;
   z-index: 5;
+}
+
+.drawing-shape-options {
+  position: absolute;
+  transform: translate(-50%, -46px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 6px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 6;
+}
+
+.drawing-shape-options input[type="range"] {
+  width: 80px;
+  accent-color: var(--accent);
+}
+
+.drawing-shape-options button {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--text-secondary);
+  transition:
+    color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+
+.drawing-shape-options button:hover {
+  color: var(--text);
+  background: var(--surface-2);
 }
 
 .drawing-toolbar {

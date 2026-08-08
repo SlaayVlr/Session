@@ -11,6 +11,7 @@ import {
   TextToolIcon,
   TrashIcon,
   UndoIcon,
+  XIcon,
 } from "./icons";
 
 function arrowHead(x1: number, y1: number, x2: number, y2: number, size = 28): string {
@@ -24,6 +25,7 @@ function arrowHead(x1: number, y1: number, x2: number, y2: number, size = 28): s
 
 function renderShapeGeometry(shape: Shape) {
   const [p0, p1] = shape.points;
+  const scale = shape.sizeScale ?? 1;
   switch (shape.type) {
     case "line":
       return (
@@ -33,7 +35,7 @@ function renderShapeGeometry(shape: Shape) {
           x2={p1?.x ?? p0.x}
           y2={p1?.y ?? p0.y}
           stroke={shape.color}
-          strokeWidth={6}
+          strokeWidth={6 * scale}
           strokeLinecap="round"
         />
       );
@@ -46,11 +48,11 @@ function renderShapeGeometry(shape: Shape) {
             x2={p1?.x ?? p0.x}
             y2={p1?.y ?? p0.y}
             stroke={shape.color}
-            strokeWidth={6}
+            strokeWidth={6 * scale}
             strokeLinecap="round"
           />
           <polygon
-            points={arrowHead(p0.x, p0.y, p1?.x ?? p0.x, p1?.y ?? p0.y)}
+            points={arrowHead(p0.x, p0.y, p1?.x ?? p0.x, p1?.y ?? p0.y, 28 * scale)}
             fill={shape.color}
           />
         </g>
@@ -67,14 +69,16 @@ function renderShapeGeometry(shape: Shape) {
           height={Math.abs(p1.y - p0.y)}
           fill="none"
           stroke={shape.color}
-          strokeWidth={6}
+          strokeWidth={6 * scale}
         />
       );
     }
     case "circle": {
       if (!p1) return null;
       const r = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-      return <circle cx={p0.x} cy={p0.y} r={r} fill="none" stroke={shape.color} strokeWidth={6} />;
+      return (
+        <circle cx={p0.x} cy={p0.y} r={r} fill="none" stroke={shape.color} strokeWidth={6 * scale} />
+      );
     }
     case "pen":
       return (
@@ -82,20 +86,20 @@ function renderShapeGeometry(shape: Shape) {
           points={shape.points.map((p) => `${p.x},${p.y}`).join(" ")}
           fill="none"
           stroke={shape.color}
-          strokeWidth={6}
+          strokeWidth={6 * scale}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       );
     case "text":
       return shape.text ? (
-        <text x={p0.x} y={p0.y} fill={shape.color} fontSize={30} fontWeight={700}>
+        <text x={p0.x} y={p0.y} fill={shape.color} fontSize={30 * scale} fontWeight={700}>
           {shape.text}
         </text>
       ) : null;
     case "icon": {
       if (!shape.iconUrl) return null;
-      const size = 28;
+      const size = 28 * scale;
       return (
         <g>
           {shape.color && (
@@ -163,6 +167,12 @@ export function DrawingCanvas({
     dt.addIcon(iconUrl, e.clientX, e.clientY, iconColor);
   }
 
+  function handleContainerMouseDown() {
+    if (dt.tool === "cursor") dt.clearSelection();
+  }
+
+  const selectedShape = dt.shapes.find((s) => s.id === dt.selectedShapeId);
+
   return (
     <div
       className={`drawing-canvas-wrap ${className ?? ""}`}
@@ -170,6 +180,7 @@ export function DrawingCanvas({
       style={style}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onMouseDown={handleContainerMouseDown}
     >
       <svg
         ref={dt.svgRef}
@@ -208,6 +219,30 @@ export function DrawingCanvas({
             if (e.key === "Escape") dt.cancelText();
           }}
         />
+      )}
+
+      {selectedShape && dt.selectedShapeScreenPos && (
+        <div
+          className="drawing-shape-options"
+          style={{ left: dt.selectedShapeScreenPos.x, top: dt.selectedShapeScreenPos.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <input
+            type="range"
+            min={0.5}
+            max={2.5}
+            step={0.1}
+            value={selectedShape.sizeScale ?? 1}
+            onChange={(e) => dt.setSelectedShapeSize(Number(e.target.value))}
+            aria-label="Taille"
+          />
+          <button type="button" onClick={dt.deleteSelected} aria-label="Supprimer">
+            <TrashIcon size={13} />
+          </button>
+          <button type="button" onClick={dt.clearSelection} aria-label="Fermer">
+            <XIcon size={11} />
+          </button>
+        </div>
       )}
     </div>
   );

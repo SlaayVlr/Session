@@ -5,6 +5,8 @@ import { Point, Shape, ShapeType } from "../types";
 
 export type Tool = ShapeType | "cursor";
 
+const CLICK_MOVE_THRESHOLD = 4;
+
 export const PRESET_COLORS = [
   "#e2413e",
   "#f5b642",
@@ -24,14 +26,24 @@ export interface EditingText {
 export function useDrawingTool(mapKey: string) {
   const { annotations, setAnnotations } = useAppData();
   const shapes = annotations[mapKey] ?? [];
-  const [tool, setTool] = useState<Tool>("cursor");
+  const [tool, setToolState] = useState<Tool>("cursor");
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [drawing, setDrawing] = useState<Shape | null>(null);
   const [editingText, setEditingText] = useState<EditingText | null>(null);
   const [movingPreview, setMovingPreview] = useState<{ id: string; points: Point[] } | null>(
     null,
   );
-  const movingRef = useRef<{ id: string; start: Point; originalPoints: Point[] } | null>(null);
+  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
+  const [selectedShapeScreenPos, setSelectedShapeScreenPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const movingRef = useRef<{
+    id: string;
+    start: Point;
+    originalPoints: Point[];
+    moved: boolean;
+  } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -77,11 +89,22 @@ export function useDrawingTool(mapKey: string) {
     });
   }
 
+  function setTool(next: Tool) {
+    setSelectedShapeId(null);
+    setSelectedShapeScreenPos(null);
+    setToolState(next);
+  }
+
+  function clearSelection() {
+    setSelectedShapeId(null);
+    setSelectedShapeScreenPos(null);
+  }
+
   function handleShapePointerDown(e: ReactMouseEvent<SVGGElement>, shape: Shape) {
     if (tool !== "cursor") return;
     e.stopPropagation();
     const p = screenToPoint(e.clientX, e.clientY);
-    movingRef.current = { id: shape.id, start: p, originalPoints: shape.points };
+    movingRef.current = { id: shape.id, start: p, originalPoints: shape.points, moved: false };
   }
 
   function handlePointerMove(e: ReactMouseEvent<SVGSVGElement>) {
@@ -90,6 +113,9 @@ export function useDrawingTool(mapKey: string) {
       const p = screenToPoint(e.clientX, e.clientY);
       const dx = p.x - movingRef.current.start.x;
       const dy = p.y - movingRef.current.start.y;
+      if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) {
+        movingRef.current.moved = true;
+      }
       const points = movingRef.current.originalPoints.map((pt) => ({
         x: pt.x + dx,
         y: pt.y + dy,
@@ -110,11 +136,17 @@ export function useDrawingTool(mapKey: string) {
   function handlePointerUp(e: ReactMouseEvent<SVGSVGElement>) {
     if (movingRef.current) {
       e.stopPropagation();
-      if (movingPreview) {
-        const id = movingRef.current.id;
+      const { id, moved } = movingRef.current;
+      if (moved && movingPreview) {
         const finalPoints = movingPreview.points;
         updateShapes((prev) =>
           prev.map((s) => (s.id === id ? { ...s, points: finalPoints } : s)),
+        );
+      } else {
+        const rect = containerRef.current?.getBoundingClientRect();
+        setSelectedShapeId(id);
+        setSelectedShapeScreenPos(
+          rect ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null,
         );
       }
       movingRef.current = null;
@@ -150,6 +182,20 @@ export function useDrawingTool(mapKey: string) {
 
   function clearAll() {
     updateShapes(() => []);
+    clearSelection();
+  }
+
+  function deleteSelected() {
+    if (!selectedShapeId) return;
+    const id = selectedShapeId;
+    updateShapes((prev) => prev.filter((s) => s.id !== id));
+    clearSelection();
+  }
+
+  function setSelectedShapeSize(scale: number) {
+    if (!selectedShapeId) return;
+    const id = selectedShapeId;
+    updateShapes((prev) => prev.map((s) => (s.id === id ? { ...s, sizeScale: scale } : s)));
   }
 
   function addIcon(iconUrl: string, clientX: number, clientY: number, bgColor = "") {
@@ -173,6 +219,11 @@ export function useDrawingTool(mapKey: string) {
     setColor,
     editingText,
     setEditingText,
+    selectedShapeId,
+    selectedShapeScreenPos,
+    clearSelection,
+    deleteSelected,
+    setSelectedShapeSize,
     svgRef,
     containerRef,
     handlePointerDown,
