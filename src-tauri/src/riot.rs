@@ -79,6 +79,7 @@ pub struct ValorantMatchDetail {
 pub struct AgentPlayCount {
     pub agent_id: String,
     pub games: i32,
+    pub hours: f32,
 }
 
 #[derive(Serialize)]
@@ -126,6 +127,7 @@ struct MatchAnalysis {
     aces: i32,
     flawless_rounds: i32,
     kast_rounds: i32,
+    game_length_millis: i64,
 }
 
 fn client_platform_header() -> String {
@@ -487,6 +489,8 @@ fn analyze_match(json: &Value, puuid: &str) -> Option<MatchAnalysis> {
         }
     }
 
+    let game_length_millis = json["matchInfo"]["gameLengthMillis"].as_i64().unwrap_or(0);
+
     Some(MatchAnalysis {
         won,
         agent_id,
@@ -503,6 +507,7 @@ fn analyze_match(json: &Value, puuid: &str) -> Option<MatchAnalysis> {
         aces,
         flawless_rounds,
         kast_rounds,
+        game_length_millis,
     })
 }
 
@@ -579,8 +584,8 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
     let mut kast_rounds_total = 0;
     let mut act_games = 0;
     let mut games_analyzed = 0;
-    let mut agent_counts_act: HashMap<String, i32> = HashMap::new();
-    let mut agent_counts_recent: HashMap<String, i32> = HashMap::new();
+    let mut agent_counts_act: HashMap<String, (i32, i64)> = HashMap::new();
+    let mut agent_counts_recent: HashMap<String, (i32, i64)> = HashMap::new();
 
     for (id, raw) in match_ids.iter().zip(raw_matches.iter()) {
         let Some(json) = raw else { continue };
@@ -588,7 +593,9 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
             continue;
         };
         games_analyzed += 1;
-        *agent_counts_recent.entry(analysis.agent_id.clone()).or_insert(0) += 1;
+        let recent_entry = agent_counts_recent.entry(analysis.agent_id.clone()).or_insert((0, 0));
+        recent_entry.0 += 1;
+        recent_entry.1 += analysis.game_length_millis;
 
         if act_ids.contains(id) {
             act_games += 1;
@@ -610,7 +617,9 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
             aces += analysis.aces;
             flawless_rounds += analysis.flawless_rounds;
             kast_rounds_total += analysis.kast_rounds;
-            *agent_counts_act.entry(analysis.agent_id.clone()).or_insert(0) += 1;
+            let act_entry = agent_counts_act.entry(analysis.agent_id.clone()).or_insert((0, 0));
+            act_entry.0 += 1;
+            act_entry.1 += analysis.game_length_millis;
         }
     }
 
@@ -620,14 +629,22 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
 
     let mut top_agents_act: Vec<AgentPlayCount> = agent_counts_act
         .into_iter()
-        .map(|(agent_id, games)| AgentPlayCount { agent_id, games })
+        .map(|(agent_id, (games, millis))| AgentPlayCount {
+            agent_id,
+            games,
+            hours: millis as f32 / 3_600_000.0,
+        })
         .collect();
     top_agents_act.sort_by(|a, b| b.games.cmp(&a.games));
     top_agents_act.truncate(5);
 
     let mut top_agents_recent: Vec<AgentPlayCount> = agent_counts_recent
         .into_iter()
-        .map(|(agent_id, games)| AgentPlayCount { agent_id, games })
+        .map(|(agent_id, (games, millis))| AgentPlayCount {
+            agent_id,
+            games,
+            hours: millis as f32 / 3_600_000.0,
+        })
         .collect();
     top_agents_recent.sort_by(|a, b| b.games.cmp(&a.games));
     top_agents_recent.truncate(5);

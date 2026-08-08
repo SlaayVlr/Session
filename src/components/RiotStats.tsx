@@ -84,6 +84,7 @@ interface MatchDetail {
 interface AgentPlayCount {
   agentId: string;
   games: number;
+  hours: number;
 }
 
 interface ActOverview {
@@ -343,7 +344,9 @@ export function RiotStats() {
                   return (
                     <div key={a.agentId} className="riot-overview-agent">
                       {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
-                      <span>{a.games}</span>
+                      <span>
+                        {a.games} partie{a.games > 1 ? "s" : ""} - {a.hours.toFixed(1)}h
+                      </span>
                     </div>
                   );
                 })}
@@ -362,7 +365,9 @@ export function RiotStats() {
                   return (
                     <div key={a.agentId} className="riot-overview-agent">
                       {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
-                      <span>{a.games}</span>
+                      <span>
+                        {a.games} partie{a.games > 1 ? "s" : ""} - {a.hours.toFixed(1)}h
+                      </span>
                     </div>
                   );
                 })}
