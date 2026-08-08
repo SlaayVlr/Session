@@ -159,7 +159,7 @@ fn local_client() -> Result<Client, String> {
         .danger_accept_invalid_certs(true)
         .timeout(Duration::from_secs(8))
         .build()
-        .map_err(|e| format!("Client HTTP local indisponible: {e}"))
+        .map_err(|e| format!("Client HTTP local indisponible: {e:?}"))
 }
 
 async fn fetch_entitlement(port: &str, password: &str) -> Result<(String, String, String), String> {
@@ -170,11 +170,11 @@ async fn fetch_entitlement(port: &str, password: &str) -> Result<(String, String
         .header("Authorization", format!("Basic {auth}"))
         .send()
         .await
-        .map_err(|e| format!("Connexion au Riot Client impossible: {e}"))?;
+        .map_err(|e| format!("Connexion au Riot Client impossible: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse entitlement invalide: {e}"))?;
+        .map_err(|e| format!("Reponse entitlement invalide: {e:?}"))?;
     let access_token = json["accessToken"].as_str().unwrap_or_default().to_string();
     let entitlement_token = json["token"].as_str().unwrap_or_default().to_string();
     let puuid = json["subject"].as_str().unwrap_or_default().to_string();
@@ -182,6 +182,33 @@ async fn fetch_entitlement(port: &str, password: &str) -> Result<(String, String
         return Err("Session Riot introuvable (es-tu connecte dans le Riot Client ?)".to_string());
     }
     Ok((access_token, entitlement_token, puuid))
+}
+
+fn normalize_region(raw: &str) -> String {
+    let r = raw.to_lowercase();
+    if r.starts_with("kr") {
+        "kr".to_string()
+    } else if r.starts_with("ap")
+        || r.starts_with("oc")
+        || r.starts_with("sea")
+        || r.starts_with("th")
+        || r.starts_with("vn")
+        || r.starts_with("tw")
+        || r.starts_with("ph")
+        || r.starts_with("jp")
+    {
+        "ap".to_string()
+    } else if r.starts_with("br") {
+        "br".to_string()
+    } else if r.starts_with("la") {
+        "latam".to_string()
+    } else if r.starts_with("eu") || r.starts_with("ru") || r.starts_with("tr") {
+        "eu".to_string()
+    } else if r.starts_with("na") {
+        "na".to_string()
+    } else {
+        r
+    }
 }
 
 async fn fetch_region(port: &str, password: &str) -> Result<String, String> {
@@ -192,15 +219,15 @@ async fn fetch_region(port: &str, password: &str) -> Result<String, String> {
         .header("Authorization", format!("Basic {auth}"))
         .send()
         .await
-        .map_err(|e| format!("Impossible de recuperer la region: {e}"))?;
+        .map_err(|e| format!("Impossible de recuperer la region: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse region invalide: {e}"))?;
-    json["region"]
+        .map_err(|e| format!("Reponse region invalide: {e:?}"))?;
+    let raw = json["region"]
         .as_str()
-        .map(|s| s.to_string())
-        .ok_or_else(|| "Region introuvable".to_string())
+        .ok_or_else(|| "Region introuvable".to_string())?;
+    Ok(normalize_region(raw))
 }
 
 async fn fetch_client_version() -> Result<String, String> {
@@ -209,11 +236,11 @@ async fn fetch_client_version() -> Result<String, String> {
         .get("https://valorant-api.com/v1/version")
         .send()
         .await
-        .map_err(|e| format!("Impossible de recuperer la version du jeu: {e}"))?;
+        .map_err(|e| format!("Impossible de recuperer la version du jeu: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse version invalide: {e}"))?;
+        .map_err(|e| format!("Reponse version invalide: {e:?}"))?;
     json["data"]["riotClientVersion"]
         .as_str()
         .map(|s| s.to_string())
@@ -243,11 +270,11 @@ async fn fetch_match_ids(region: &str, puuid: &str, headers: &HeaderMap) -> Resu
         .headers(headers.clone())
         .send()
         .await
-        .map_err(|e| format!("Historique de parties inaccessible: {e}"))?;
+        .map_err(|e| format!("Historique de parties inaccessible: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse historique invalide: {e}"))?;
+        .map_err(|e| format!("Reponse historique invalide: {e:?}"))?;
     let history = json["History"].as_array().cloned().unwrap_or_default();
     Ok(history
         .iter()
@@ -268,11 +295,11 @@ async fn fetch_match_detail(
         .headers(headers.clone())
         .send()
         .await
-        .map_err(|e| format!("Details de partie inaccessibles: {e}"))?;
+        .map_err(|e| format!("Details de partie inaccessibles: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse details de partie invalide: {e}"))?;
+        .map_err(|e| format!("Reponse details de partie invalide: {e:?}"))?;
 
     let players = json["players"].as_array().cloned().unwrap_or_default();
     let me = match players.iter().find(|p| p["subject"].as_str() == Some(puuid)) {
@@ -528,11 +555,11 @@ pub async fn get_valorant_act_overview() -> Result<ValorantActOverview, String> 
         .headers(headers.clone())
         .send()
         .await
-        .map_err(|e| format!("Historique de rang inaccessible: {e}"))?;
+        .map_err(|e| format!("Historique de rang inaccessible: {e:?}"))?;
     let cu_json: Value = cu_resp
         .json()
         .await
-        .map_err(|e| format!("Reponse rang invalide: {e}"))?;
+        .map_err(|e| format!("Reponse rang invalide: {e:?}"))?;
     let cu_matches = cu_json["Matches"].as_array().cloned().unwrap_or_default();
 
     if cu_matches.is_empty() {
@@ -726,11 +753,11 @@ pub async fn get_valorant_match_detail(match_id: String) -> Result<ValorantMatch
         .headers(headers.clone())
         .send()
         .await
-        .map_err(|e| format!("Details de partie inaccessibles: {e}"))?;
+        .map_err(|e| format!("Details de partie inaccessibles: {e:?}"))?;
     let json: Value = resp
         .json()
         .await
-        .map_err(|e| format!("Reponse details de partie invalide: {e}"))?;
+        .map_err(|e| format!("Reponse details de partie invalide: {e:?}"))?;
 
     let players_json = json["players"].as_array().cloned().unwrap_or_default();
     let puuids: Vec<String> = players_json
