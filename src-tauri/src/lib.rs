@@ -4,9 +4,25 @@ use std::process::Command;
 
 mod riot;
 
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+#[cfg(target_os = "windows")]
+fn no_window_command(program: &str) -> Command {
+    use std::os::windows::process::CommandExt;
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
+
+#[cfg(not(target_os = "windows"))]
+fn no_window_command(program: &str) -> Command {
+    Command::new(program)
+}
+
 #[tauri::command]
 fn launch_game(exe_path: String) -> Result<(), String> {
-    Command::new(&exe_path)
+    no_window_command(&exe_path)
         .spawn()
         .map(|_| ())
         .map_err(|e| format!("Impossible de lancer {exe_path}: {e}"))
@@ -16,7 +32,7 @@ fn launch_game(exe_path: String) -> Result<(), String> {
 fn is_process_running(exe_name: String) -> bool {
     #[cfg(target_os = "windows")]
     {
-        let output = Command::new("tasklist")
+        let output = no_window_command("tasklist")
             .args(["/FI", &format!("IMAGENAME eq {exe_name}")])
             .output();
         match output {
