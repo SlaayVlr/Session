@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { fetchCached } from "../apiCache";
 import { formatDate } from "../format";
 
@@ -125,6 +125,15 @@ const QUEUE_LABELS: Record<string, string> = {
   onefa: "Replication",
 };
 
+function queueLabel(queueId: string): string {
+  if (!queueId) return "Partie personnalisee";
+  return QUEUE_LABELS[queueId] ?? "Partie";
+}
+
+function hideOnError(e: SyntheticEvent<HTMLImageElement>) {
+  e.currentTarget.style.display = "none";
+}
+
 type Status = "idle" | "loading" | "error" | "ready";
 
 export function RiotStats() {
@@ -173,8 +182,8 @@ export function RiotStats() {
           "https://valorant-api.com/v1/maps?language=fr-FR",
         ),
         fetchCached<{ data: AgentInfo[] }>(
-          "agents-v1",
-          "https://valorant-api.com/v1/agents?language=fr-FR&isPlayableCharacter=true",
+          "agents-full-v1",
+          "https://valorant-api.com/v1/agents?language=fr-FR",
         ),
         fetchCached<TierTable>("tiers-v1", "https://valorant-api.com/v1/competitivetiers"),
       ]);
@@ -244,7 +253,11 @@ export function RiotStats() {
           <div className="riot-overview-ranks">
             <div className="riot-rank-card">
               {tierInfo(overview.currentTier)?.smallIcon && (
-                <img src={tierInfo(overview.currentTier)!.smallIcon!} alt="" />
+                <img
+                  src={tierInfo(overview.currentTier)!.smallIcon!}
+                  alt=""
+                  onError={hideOnError}
+                />
               )}
               <div>
                 <div className="riot-rank-label">Rang actuel</div>
@@ -256,7 +269,11 @@ export function RiotStats() {
             </div>
             <div className="riot-rank-card">
               {tierInfo(overview.peakTier)?.smallIcon && (
-                <img src={tierInfo(overview.peakTier)!.smallIcon!} alt="" />
+                <img
+                  src={tierInfo(overview.peakTier)!.smallIcon!}
+                  alt=""
+                  onError={hideOnError}
+                />
               )}
               <div>
                 <div className="riot-rank-label">Rang peak (cet acte)</div>
@@ -343,7 +360,9 @@ export function RiotStats() {
                   const agent = agentInfo(a.agentId);
                   return (
                     <div key={a.agentId} className="riot-overview-agent">
-                      {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
+                      {agent?.displayIcon && (
+                        <img src={agent.displayIcon} alt={agent.displayName} onError={hideOnError} />
+                      )}
                       <span>
                         {a.games} partie{a.games > 1 ? "s" : ""} - {a.hours.toFixed(1)}h
                       </span>
@@ -364,7 +383,9 @@ export function RiotStats() {
                   const agent = agentInfo(a.agentId);
                   return (
                     <div key={a.agentId} className="riot-overview-agent">
-                      {agent?.displayIcon && <img src={agent.displayIcon} alt={agent.displayName} />}
+                      {agent?.displayIcon && (
+                        <img src={agent.displayIcon} alt={agent.displayName} onError={hideOnError} />
+                      )}
                       <span>
                         {a.games} partie{a.games > 1 ? "s" : ""} - {a.hours.toFixed(1)}h
                       </span>
@@ -396,19 +417,25 @@ export function RiotStats() {
                   }`}
                   onClick={() => openMatch(m.matchId)}
                 >
-                  {icon && <img className="riot-match-map" src={icon} alt="" />}
+                  {icon && (
+                    <img
+                      className="riot-match-map"
+                      src={icon}
+                      alt=""
+                      onError={hideOnError}
+                    />
+                  )}
                   {agent?.displayIcon && (
                     <img
                       className="riot-match-agent"
                       src={agent.displayIcon}
                       alt={agent.displayName}
+                      onError={hideOnError}
                     />
                   )}
                   <div className="riot-match-info">
                     <span className="riot-match-map-name">{mapName(m.mapId)}</span>
-                    <span className="riot-match-queue">
-                      {QUEUE_LABELS[m.queueId] ?? m.queueId}
-                    </span>
+                    <span className="riot-match-queue">{queueLabel(m.queueId)}</span>
                   </div>
                   <div className="riot-match-score">
                     {m.roundsWon}-{m.roundsLost}
@@ -430,9 +457,7 @@ export function RiotStats() {
           <div className="maps-modal riot-scoreboard-modal" onClick={(e) => e.stopPropagation()}>
             <div className="maps-modal-header">
               <h3>
-                {detail
-                  ? `${mapName(detail.mapId)} - ${QUEUE_LABELS[detail.queueId] ?? detail.queueId}`
-                  : "Scoreboard"}
+                {detail ? `${mapName(detail.mapId)} - ${queueLabel(detail.queueId)}` : "Scoreboard"}
               </h3>
               <button type="button" onClick={closeMatch} aria-label="Fermer">
                 x
@@ -483,6 +508,7 @@ export function RiotStats() {
                                 className="riot-scoreboard-agent"
                                 src={agent.displayIcon}
                                 alt={agent.displayName}
+                                onError={hideOnError}
                               />
                             )}
                             <span className="riot-scoreboard-name">
