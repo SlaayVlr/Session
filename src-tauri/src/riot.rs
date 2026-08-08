@@ -3,6 +3,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 use serde::Serialize;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::time::Duration;
 
 #[derive(Serialize, Clone)]
@@ -37,6 +38,40 @@ pub struct ValorantProfile {
     pub region: String,
     pub rank: Option<ValorantRank>,
     pub matches: Vec<ValorantMatch>,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ValorantScoreboardPlayer {
+    pub puuid: String,
+    pub display_name: String,
+    pub agent_id: String,
+    pub team_id: String,
+    pub kills: i32,
+    pub deaths: i32,
+    pub assists: i32,
+    pub score: i32,
+    pub is_me: bool,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ValorantTeamResult {
+    pub team_id: String,
+    pub won: bool,
+    pub rounds_won: i32,
+    pub rounds_played: i32,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ValorantMatchDetail {
+    pub match_id: String,
+    pub map_id: String,
+    pub queue_id: String,
+    pub started_at: i64,
+    pub teams: Vec<ValorantTeamResult>,
+    pub players: Vec<ValorantScoreboardPlayer>,
 }
 
 fn client_platform_header() -> String {
@@ -219,6 +254,34 @@ async fn fetch_match_detail(
     }))
 }
 
+async fn fetch_player_names(
+    region: &str,
+    puuids: &[String],
+    headers: &HeaderMap,
+) -> HashMap<String, String> {
+    let client = Client::new();
+    let url = format!("https://pd.{region}.a.pvp.net/name-service/v3/players");
+    let mut map = HashMap::new();
+    let Ok(resp) = client.put(url).headers(headers.clone()).json(puuids).send().await else {
+        return map;
+    };
+    let Ok(json) = resp.json::<Value>().await else {
+        return map;
+    };
+    if let Some(arr) = json.as_array() {
+        for entry in arr {
+            let subject = entry["Subject"].as_str().unwrap_or_default().to_string();
+            if subject.is_empty() {
+                continue;
+            }
+            let game_name = entry["GameName"].as_str().unwrap_or_default();
+            let tag_line = entry["TagLine"].as_str().unwrap_or_default();
+            map.insert(subject, format!("{game_name}#{tag_line}"));
+        }
+    }
+    map
+}
+
 async fn fetch_rank(region: &str, puuid: &str, headers: &HeaderMap) -> Option<ValorantRank> {
     let client = Client::new();
     let url = format!("https://pd.{region}.a.pvp.net/mmr/v1/players/{puuid}");
@@ -260,5 +323,75 @@ pub async fn get_valorant_profile() -> Result<ValorantProfile, String> {
         region,
         rank,
         matches,
+    })
+}
+
+#[tauri::command]
+pub async fn get_valorant_match_detail(match_id: String) -> Result<ValorantMatchDetail, String> {
+    let (port, password) = read_lockfile()?;
+    let (access_token, entitlement_token, puuid) = fetch_entitlement(&port, &password).await?;
+    let region = fetch_region(&port, &password).await?;
+    let client_version = fetch_client_version().await?;
+    let headers = pd_headers(&access_token, &entitlement_token, &client_version);
+
+    let client = Client::new();
+    let url = format!("https://pd.{region}.a.pvp.net/match-details/v1/matches/{match_id}");
+    let resp = client
+        .get(url)
+        .headers(headers.clone())
+        .send()
+        .await
+        .map_err(|e| format!("Details de partie inaccessibles: {e}"))?;
+    let json: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Reponse details de partie invalide: {e}"))?;
+
+    let players_json = json["players"].as_array().cloned().unwrap_or_default();
+    let puuids: Vec<String> = players_json
+        .iter()
+        .filter_map(|p| p["subject"].as_str().map(|s| s.to_string()))
+        .collect();
+    let names = fetch_player_names(&region, &puuids, &headers).await;
+
+    let players: Vec<ValorantScoreboardPlayer> = players_json
+        .iter()
+        .map(|p| {
+            let stats = &p["stats"];
+            let subject = p["subject"].as_str().unwrap_or_default().to_string();
+            ValorantScoreboardPlayer {
+                is_me: subject == puuid,
+                display_name: names.get(&subject).cloned().unwrap_or_default(),
+                puuid: subject,
+                agent_id: p["characterId"].as_str().unwrap_or_default().to_string(),
+                team_id: p["teamId"].as_str().unwrap_or_default().to_string(),
+                kills: stats["kills"].as_i64().unwrap_or(0) as i32,
+                deaths: stats["deaths"].as_i64().unwrap_or(0) as i32,
+                assists: stats["assists"].as_i64().unwrap_or(0) as i32,
+                score: stats["score"].as_i64().unwrap_or(0) as i32,
+            }
+        })
+        .collect();
+
+    let teams: Vec<ValorantTeamResult> = json["teams"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .iter()
+        .map(|t| ValorantTeamResult {
+            team_id: t["teamId"].as_str().unwrap_or_default().to_string(),
+            won: t["won"].as_bool().unwrap_or(false),
+            rounds_won: t["roundsWon"].as_i64().unwrap_or(0) as i32,
+            rounds_played: t["roundsPlayed"].as_i64().unwrap_or(0) as i32,
+        })
+        .collect();
+
+    Ok(ValorantMatchDetail {
+        map_id: json["matchInfo"]["mapId"].as_str().unwrap_or_default().to_string(),
+        queue_id: json["matchInfo"]["queueID"].as_str().unwrap_or_default().to_string(),
+        started_at: json["matchInfo"]["gameStartMillis"].as_i64().unwrap_or(0),
+        match_id,
+        teams,
+        players,
     })
 }

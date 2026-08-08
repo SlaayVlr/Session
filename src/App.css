@@ -2102,6 +2102,15 @@ input[type="color"]:hover {
   border-left: 3px solid var(--border);
   border-radius: 8px;
   font-size: 12px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease);
+}
+
+.riot-match-row:hover {
+  background: var(--surface-2);
 }
 
 .riot-match-row--win {
@@ -2178,6 +2187,76 @@ input[type="color"]:hover {
 
 .riot-match-row--loss .riot-match-result {
   color: var(--accent-valorant);
+}
+
+.riot-scoreboard-modal {
+  max-width: 560px;
+}
+
+.riot-scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.riot-scoreboard-team-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.riot-scoreboard-team-header--win {
+  color: #34c759;
+}
+
+.riot-scoreboard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.riot-scoreboard-row--me {
+  background: color-mix(in srgb, var(--accent-valorant) 14%, transparent);
+}
+
+.riot-scoreboard-agent {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+
+.riot-scoreboard-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.riot-scoreboard-row--me .riot-scoreboard-name {
+  font-weight: 700;
+}
+
+.riot-scoreboard-kda {
+  color: var(--text-secondary);
+  min-width: 64px;
+  text-align: center;
+}
+
+.riot-scoreboard-acs {
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: right;
 }
 
 /* Maps view */

@@ -72,7 +72,8 @@ pub fn run() {
             is_process_running,
             write_text_file,
             read_image_as_base64,
-            riot::get_valorant_profile
+            riot::get_valorant_profile,
+            riot::get_valorant_match_detail
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -53,6 +53,34 @@ interface TierTable {
   data: { tiers: TierInfo[] }[];
 }
 
+interface ScoreboardPlayer {
+  puuid: string;
+  displayName: string;
+  agentId: string;
+  teamId: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  score: number;
+  isMe: boolean;
+}
+
+interface TeamResult {
+  teamId: string;
+  won: boolean;
+  roundsWon: number;
+  roundsPlayed: number;
+}
+
+interface MatchDetail {
+  matchId: string;
+  mapId: string;
+  queueId: string;
+  startedAt: number;
+  teams: TeamResult[];
+  players: ScoreboardPlayer[];
+}
+
 const QUEUE_LABELS: Record<string, string> = {
   competitive: "Competitive",
   unrated: "Non classee",
@@ -73,6 +101,29 @@ export function RiotStats() {
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [tiers, setTiers] = useState<TierInfo[]>([]);
+  const [detailMatchId, setDetailMatchId] = useState<string | null>(null);
+  const [detailStatus, setDetailStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [detailError, setDetailError] = useState("");
+  const [detail, setDetail] = useState<MatchDetail | null>(null);
+
+  async function openMatch(matchId: string) {
+    setDetailMatchId(matchId);
+    setDetailStatus("loading");
+    setDetail(null);
+    try {
+      const result = await invoke<MatchDetail>("get_valorant_match_detail", { matchId });
+      setDetail(result);
+      setDetailStatus("ready");
+    } catch (e) {
+      setDetailError(typeof e === "string" ? e : "Impossible de recuperer le scoreboard.");
+      setDetailStatus("error");
+    }
+  }
+
+  function closeMatch() {
+    setDetailMatchId(null);
+    setDetail(null);
+  }
 
   async function load() {
     setStatus("loading");
@@ -161,11 +212,13 @@ export function RiotStats() {
               const agent = agentInfo(m.agentId);
               const icon = mapIcon(m.mapId);
               return (
-                <div
+                <button
+                  type="button"
                   key={m.matchId}
                   className={`riot-match-row ${
                     m.won ? "riot-match-row--win" : "riot-match-row--loss"
                   }`}
+                  onClick={() => openMatch(m.matchId)}
                 >
                   {icon && <img className="riot-match-map" src={icon} alt="" />}
                   {agent?.displayIcon && (
@@ -189,11 +242,90 @@ export function RiotStats() {
                   </div>
                   <span className="riot-match-date">{formatDate(m.startedAt)}</span>
                   <span className="riot-match-result">{m.won ? "Victoire" : "Defaite"}</span>
-                </div>
+                </button>
               );
             })}
           </div>
         </>
+      )}
+
+      {detailMatchId && (
+        <div className="maps-overlay" onClick={closeMatch}>
+          <div className="maps-modal riot-scoreboard-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="maps-modal-header">
+              <h3>
+                {detail
+                  ? `${mapName(detail.mapId)} - ${QUEUE_LABELS[detail.queueId] ?? detail.queueId}`
+                  : "Scoreboard"}
+              </h3>
+              <button type="button" onClick={closeMatch} aria-label="Fermer">
+                x
+              </button>
+            </div>
+
+            {detailStatus === "loading" && (
+              <p className="riot-stats-hint">Chargement du scoreboard...</p>
+            )}
+            {detailStatus === "error" && (
+              <p className="riot-stats-error">
+                {detailError || "Echec de la recuperation du scoreboard."}
+              </p>
+            )}
+            {detailStatus === "ready" && detail && (
+              <div className="riot-scoreboard">
+                {detail.teams.map((team) => {
+                  const teamPlayers = detail.players
+                    .filter((p) => p.teamId === team.teamId)
+                    .sort((a, b) => b.score - a.score);
+                  return (
+                    <div key={team.teamId} className="riot-scoreboard-team">
+                      <div
+                        className={`riot-scoreboard-team-header ${
+                          team.won ? "riot-scoreboard-team-header--win" : ""
+                        }`}
+                      >
+                        <span>{team.won ? "Victoire" : "Defaite"}</span>
+                        <span>
+                          {team.roundsWon}/{team.roundsPlayed}
+                        </span>
+                      </div>
+                      {teamPlayers.map((p) => {
+                        const agent = agentInfo(p.agentId);
+                        const acs =
+                          team.roundsPlayed > 0
+                            ? Math.round(p.score / team.roundsPlayed)
+                            : p.score;
+                        return (
+                          <div
+                            key={p.puuid}
+                            className={`riot-scoreboard-row ${
+                              p.isMe ? "riot-scoreboard-row--me" : ""
+                            }`}
+                          >
+                            {agent?.displayIcon && (
+                              <img
+                                className="riot-scoreboard-agent"
+                                src={agent.displayIcon}
+                                alt={agent.displayName}
+                              />
+                            )}
+                            <span className="riot-scoreboard-name">
+                              {p.displayName || agent?.displayName || "Joueur inconnu"}
+                            </span>
+                            <span className="riot-scoreboard-kda">
+                              {p.kills}/{p.deaths}/{p.assists}
+                            </span>
+                            <span className="riot-scoreboard-acs">{acs} ACS</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
